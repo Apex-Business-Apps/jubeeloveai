@@ -1,11 +1,18 @@
+import { useEffect } from 'react';
 import { SEO } from '@/components/SEO';
 import { useGameStore } from '@/store/useGameStore';
+import { useBackgroundStore } from '@/store/useBackgroundStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Trophy, Star, Award, Target } from 'lucide-react';
 
 export default function ProgressPage() {
   const { score, stickers, completedActivities } = useGameStore();
+  const { setTheme } = useBackgroundStore();
+
+  useEffect(() => {
+    setTheme('progress');
+  }, [setTheme]);
 
   const totalActivities = 10; // Writing (10 letters) + Shapes (4) + future modules
   const progressPercentage = (completedActivities.length / totalActivities) * 100;
@@ -18,10 +25,10 @@ export default function ProgressPage() {
       />
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         <header className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-primary mb-2">
+          <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg mb-2">
             My Progress
           </h1>
-          <p className="text-primary">
+          <p className="text-white drop-shadow-md">
             Keep up the great work! Here's how you're doing.
           </p>
         </header>

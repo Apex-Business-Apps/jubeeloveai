@@ -1,18 +1,24 @@
 import { SEO } from '@/components/SEO';
 import { useGameStore } from '@/store/useGameStore';
 import { useJubeeStore } from '@/store/useJubeeStore';
+import { useBackgroundStore } from '@/store/useBackgroundStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Settings as SettingsIcon, Volume2, VolumeX, Sun, Moon, Sunrise, Sunset } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
   const { currentTheme, updateTheme } = useGameStore();
   const { gender, setGender, speak } = useJubeeStore();
+  const { setTheme } = useBackgroundStore();
   const [soundEnabled, setSoundEnabled] = useState(true);
+
+  useEffect(() => {
+    setTheme('settings');
+  }, [setTheme]);
 
   const themes = [
     { name: 'morning', icon: Sunrise, label: 'Morning' },
@@ -46,11 +52,11 @@ export default function SettingsPage() {
       />
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         <header className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-primary mb-2 flex items-center justify-center gap-3">
+          <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg mb-2 flex items-center justify-center gap-3">
             <SettingsIcon className="w-10 h-10" />
             Settings
           </h1>
-          <p className="text-primary">
+          <p className="text-white drop-shadow-md">
             Customize your Jubee experience
           </p>
         </header>

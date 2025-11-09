@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useJubeeStore } from '../../store/useJubeeStore';
 import { useGameStore } from '../../store/useGameStore';
+import { useBackgroundStore } from '../../store/useBackgroundStore';
 import { SEO } from '../../components/SEO';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -28,7 +29,12 @@ export default function WritingCanvas() {
   const [drawColor, setDrawColor] = useState('#3b82f6');
   const { speak, triggerAnimation } = useJubeeStore();
   const { addScore } = useGameStore();
+  const { setTheme } = useBackgroundStore();
   const { playDrawSound, playClearSound, playSuccessSound } = useAudioEffects();
+
+  useEffect(() => {
+    setTheme('writing');
+  }, [setTheme]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -159,10 +165,10 @@ export default function WritingCanvas() {
       />
       <div className="writing-canvas-container">
         <header>
-          <h1 className="text-3xl md:text-4xl font-bold text-center mb-2 text-primary">
+          <h1 className="text-3xl md:text-4xl font-bold text-center mb-2 text-white drop-shadow-lg">
             Trace the Letter: {currentLetter}
           </h1>
-          <p className="text-center text-primary mb-4">
+          <p className="text-center text-white drop-shadow-md mb-4">
             Use your finger or mouse to trace the letter outline
           </p>
         </header>

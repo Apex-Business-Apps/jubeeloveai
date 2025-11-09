@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useJubeeStore } from '../../store/useJubeeStore';
 import { useGameStore } from '../../store/useGameStore';
+import { useBackgroundStore } from '../../store/useBackgroundStore';
 import { SEO } from '../../components/SEO';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
@@ -21,6 +22,11 @@ export default function ShapeSorter() {
   const [score, setScore] = useState(0);
   const { speak, triggerAnimation } = useJubeeStore();
   const { addScore } = useGameStore();
+  const { setTheme } = useBackgroundStore();
+
+  useEffect(() => {
+    setTheme('shapes');
+  }, [setTheme]);
 
   const checkShape = (shape: Shape) => {
     if (shape === targetShape) {
@@ -66,13 +72,13 @@ export default function ShapeSorter() {
       />
       <div className="shape-sorter-container">
         <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-center mb-2 text-primary">
+          <h1 className="text-3xl md:text-4xl font-bold text-center mb-2 text-white drop-shadow-lg">
             Find the {targetShape}!
           </h1>
-          <p className="text-xl text-center text-primary mb-4">
+          <p className="text-xl text-center text-white drop-shadow-md mb-4">
             Current Score: {score}
           </p>
-          <p className="text-center text-sm text-muted-foreground max-w-md mx-auto">
+          <p className="text-center text-sm text-white/90 drop-shadow max-w-md mx-auto">
             {shapeDescriptions[targetShape]}
           </p>
         </header>
@@ -93,7 +99,7 @@ export default function ShapeSorter() {
         </div>
 
         <div className="mt-8 text-center">
-          <p className="text-lg text-primary font-medium">
+          <p className="text-lg text-white drop-shadow-md font-medium">
             Tap the {targetShape} <span aria-hidden="true">{getShapeEmoji(targetShape)}</span>
           </p>
         </div>

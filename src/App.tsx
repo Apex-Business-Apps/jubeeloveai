@@ -6,9 +6,11 @@ import { Toaster } from '@/components/ui/toaster';
 import { JubeeMascot } from './core/jubee/JubeeMascot';
 import { useGameStore } from './store/useGameStore';
 import { useJubeeStore } from './store/useJubeeStore';
+import { useBackgroundStore } from './store/useBackgroundStore';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SEO } from './components/SEO';
 import { LoadingScreen } from './components/LoadingScreen';
+import { DynamicBackground } from './components/DynamicBackground';
 import { HomeIcon, PencilIcon, StarIcon, ChartIcon, GiftIcon, GearIcon } from '@/components/icons/Icons';
 
 const WritingCanvas = lazy(() => import('./modules/writing/WritingCanvas'));
@@ -51,15 +53,16 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <SEO />
+          <DynamicBackground />
           <div className="app" data-theme={currentTheme}>
             <div className="jubee-container" aria-hidden="true">
               <Canvas camera={{ position: [0, 0, 5] }}>
                 <ambientLight intensity={0.5} />
                 <spotLight position={[10, 10, 10]} />
                 <Suspense fallback={null}>
-                  <JubeeMascot 
-                    position={[jubeePosition.x, jubeePosition.y, jubeePosition.z]} 
-                    animation={jubeeAnimation} 
+                  <JubeeMascot
+                    position={[jubeePosition.x, jubeePosition.y, jubeePosition.z]}
+                    animation={jubeeAnimation}
                   />
                 </Suspense>
               </Canvas>
@@ -88,40 +91,46 @@ export default function App() {
 }
 
 function HomePage() {
+  const { setTheme } = useBackgroundStore();
+
+  useEffect(() => {
+    setTheme('home');
+  }, [setTheme]);
+
   return (
     <>
-      <SEO 
+      <SEO
         title="Jubee Love - Home"
         description="Welcome to Jubee's World! Choose from writing practice, shape recognition, and more fun learning activities."
       />
       <div className="home-page">
-        <h1 className="text-4xl md:text-5xl font-bold text-center mt-8 text-primary">
+        <h1 className="text-4xl md:text-5xl font-bold text-center mt-8 text-white drop-shadow-lg">
           Welcome to Jubee's World!
         </h1>
-        <p className="text-center text-primary mt-4 px-4 max-w-2xl mx-auto">
+        <p className="text-center text-white drop-shadow-md mt-4 px-4 max-w-2xl mx-auto">
           Learn and play with Jubee the friendly bee! Choose an activity below to start your educational adventure.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 max-w-4xl mx-auto">
-          <GameCard 
-            title="Writing Practice" 
+          <GameCard
+            title="Writing Practice"
             icon={<PencilIcon className="w-24 h-24" />}
             path="/write"
             description="Practice your writing skills with fun drawing activities"
           />
-          <GameCard 
-            title="Shape Recognition" 
+          <GameCard
+            title="Shape Recognition"
             icon={<StarIcon className="w-24 h-24" />}
             path="/shapes"
             description="Learn and identify different shapes"
           />
-          <GameCard 
-            title="My Progress" 
+          <GameCard
+            title="My Progress"
             icon={<ChartIcon className="w-24 h-24" />}
             path="/progress"
             description="See your scores, achievements, and learning stats"
           />
-          <GameCard 
-            title="Sticker Collection" 
+          <GameCard
+            title="Sticker Collection"
             icon={<GiftIcon className="w-24 h-24" />}
             path="/stickers"
             description="Collect and unlock colorful stickers and rewards"

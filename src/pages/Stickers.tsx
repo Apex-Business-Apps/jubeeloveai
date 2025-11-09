@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { SEO } from '@/components/SEO';
 import { useGameStore } from '@/store/useGameStore';
+import { useBackgroundStore } from '@/store/useBackgroundStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Gift } from 'lucide-react';
@@ -9,7 +11,12 @@ const availableStickers = ['⭐', '🌟', '✨', '🎯', '🏆', '🎖️', '�
 
 export default function StickersPage() {
   const { stickers, addSticker, score } = useGameStore();
+  const { setTheme } = useBackgroundStore();
   const stickerCost = 50;
+
+  useEffect(() => {
+    setTheme('stickers');
+  }, [setTheme]);
 
   const handleBuySticker = (sticker: string) => {
     if (stickers.includes(sticker)) {
@@ -45,13 +52,13 @@ export default function StickersPage() {
       />
       <div className="max-w-6xl mx-auto p-6 space-y-8">
         <header className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-primary mb-2">
+          <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg mb-2">
             Sticker Collection
           </h1>
-          <p className="text-primary">
+          <p className="text-white drop-shadow-md">
             Collect stickers by completing activities! Each sticker costs {stickerCost} points.
           </p>
-          <p className="text-2xl font-bold text-primary mt-4">
+          <p className="text-2xl font-bold text-white drop-shadow-md mt-4">
             Your Points: {score}
           </p>
         </header>
