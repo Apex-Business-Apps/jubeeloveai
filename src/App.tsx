@@ -9,12 +9,7 @@ import { useJubeeStore } from './store/useJubeeStore';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SEO } from './components/SEO';
 import { LoadingScreen } from './components/LoadingScreen';
-import iconHome from '@/assets/icon-home.png';
-import iconWriting from '@/assets/icon-writing.png';
-import iconShapes from '@/assets/icon-shapes.png';
-import iconProgress from '@/assets/icon-progress.png';
-import iconStickers from '@/assets/icon-stickers.png';
-import iconSettings from '@/assets/icon-settings.png';
+import { HomeIcon, PencilIcon, StarIcon, TrophyIcon, GiftIcon, GearIcon } from '@/components/icons/Icons';
 
 const WritingCanvas = lazy(() => import('./modules/writing/WritingCanvas'));
 const ShapeSorter = lazy(() => import('./modules/shapes/ShapeSorter'));
@@ -109,25 +104,25 @@ function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 max-w-4xl mx-auto">
           <GameCard 
             title="Writing Practice" 
-            icon={iconWriting}
+            icon={<PencilIcon className="w-24 h-24" />}
             path="/write"
             description="Practice your writing skills with fun drawing activities"
           />
           <GameCard 
             title="Shape Recognition" 
-            icon={iconShapes}
+            icon={<StarIcon className="w-24 h-24" />}
             path="/shapes"
             description="Learn and identify different shapes"
           />
           <GameCard 
             title="My Progress" 
-            icon={iconProgress}
+            icon={<TrophyIcon className="w-24 h-24" />}
             path="/progress"
             description="See your scores, achievements, and learning stats"
           />
           <GameCard 
             title="Sticker Collection" 
-            icon={iconStickers}
+            icon={<GiftIcon className="w-24 h-24" />}
             path="/stickers"
             description="Collect and unlock colorful stickers and rewards"
           />
@@ -139,7 +134,7 @@ function HomePage() {
 
 interface GameCardProps {
   title: string;
-  icon: string;
+  icon: React.ReactNode;
   path: string;
   description: string;
 }
@@ -159,13 +154,9 @@ function GameCard({ title, icon, path, description }: GameCardProps) {
       className="game-card group focus:outline-none focus-visible:ring-4 focus-visible:ring-ring focus-visible:ring-offset-2"
       aria-label={`Start ${title} activity`}
     >
-      <img 
-        src={icon} 
-        alt="" 
-        className="w-24 h-24 transition-transform group-hover:scale-110 object-contain" 
-        aria-hidden="true"
-        style={{ background: 'transparent', mixBlendMode: 'multiply' }}
-      />
+      <div className="w-24 h-24 transition-transform group-hover:scale-110 text-primary flex items-center justify-center" aria-hidden="true">
+        {icon}
+      </div>
       <span className="text-2xl md:text-3xl mt-4 font-bold text-primary">{title}</span>
       <p className="text-sm text-primary mt-2 px-4">{description}</p>
     </button>
@@ -175,12 +166,12 @@ function GameCard({ title, icon, path, description }: GameCardProps) {
 function Navigation() {
   return (
     <nav className="tab-bar" role="navigation" aria-label="Main navigation">
-      <TabButton path="/" icon={iconHome} label="Home" />
-      <TabButton path="/write" icon={iconWriting} label="Write" />
-      <TabButton path="/shapes" icon={iconShapes} label="Shapes" />
-      <TabButton path="/progress" icon={iconProgress} label="Progress" />
-      <TabButton path="/stickers" icon={iconStickers} label="Stickers" />
-      <TabButton path="/settings" icon={iconSettings} label="Settings" />
+      <TabButton path="/" icon={<HomeIcon />} label="Home" />
+      <TabButton path="/write" icon={<PencilIcon />} label="Write" />
+      <TabButton path="/shapes" icon={<StarIcon />} label="Shapes" />
+      <TabButton path="/progress" icon={<TrophyIcon />} label="Progress" />
+      <TabButton path="/stickers" icon={<GiftIcon />} label="Stickers" />
+      <TabButton path="/settings" icon={<GearIcon />} label="Settings" />
     </nav>
   );
 }
