@@ -162,8 +162,9 @@ function GameCard({ title, icon, path, description }: GameCardProps) {
       <img 
         src={icon} 
         alt="" 
-        className="w-24 h-24 transition-transform group-hover:scale-110" 
+        className="w-24 h-24 transition-transform group-hover:scale-110 object-contain" 
         aria-hidden="true"
+        style={{ background: 'transparent', mixBlendMode: 'multiply' }}
       />
       <span className="text-2xl md:text-3xl mt-4 font-bold text-primary">{title}</span>
       <p className="text-sm text-primary mt-2 px-4">{description}</p>
@@ -207,8 +208,9 @@ function TabButton({ path, icon, label }: TabButtonProps) {
       <img 
         src={icon} 
         alt="" 
-        className="w-8 h-8" 
+        className="w-8 h-8 object-contain" 
         aria-hidden="true"
+        style={{ background: 'transparent', mixBlendMode: 'multiply' }}
       />
       <span className="text-xs font-medium text-primary">{label}</span>
     </button>
