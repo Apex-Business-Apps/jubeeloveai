@@ -3,15 +3,28 @@ import { useJubeeStore } from '../../store/useJubeeStore';
 import { useGameStore } from '../../store/useGameStore';
 import { SEO } from '../../components/SEO';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from '@/hooks/use-toast';
-import { Eraser, SkipForward } from 'lucide-react';
+import { Eraser, SkipForward, Palette } from 'lucide-react';
 
 const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+
+const colors = [
+  { name: 'Red', value: '#ef4444' },
+  { name: 'Orange', value: '#f97316' },
+  { name: 'Yellow', value: '#eab308' },
+  { name: 'Green', value: '#22c55e' },
+  { name: 'Blue', value: '#3b82f6' },
+  { name: 'Purple', value: '#a855f7' },
+  { name: 'Pink', value: '#ec4899' },
+  { name: 'Black', value: '#000000' },
+];
 
 export default function WritingCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [currentLetter, setCurrentLetter] = useState('A');
   const [isDrawing, setIsDrawing] = useState(false);
+  const [drawColor, setDrawColor] = useState('#3b82f6');
   const { speak, triggerAnimation } = useJubeeStore();
   const { addScore } = useGameStore();
 
@@ -63,7 +76,7 @@ export default function WritingCanvas() {
     const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
     const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
 
-    ctx.strokeStyle = 'hsl(var(--primary))';
+    ctx.strokeStyle = drawColor;
     ctx.lineWidth = 12;
     ctx.lineCap = 'round';
     ctx.lineTo(x, y);
@@ -142,7 +155,41 @@ export default function WritingCanvas() {
           role="img"
         />
 
-        <div className="flex gap-4 justify-center mt-6" role="group" aria-label="Canvas controls">
+        <div className="flex gap-4 justify-center mt-6 flex-wrap" role="group" aria-label="Canvas controls">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline"
+                size="lg"
+                className="min-h-[44px] min-w-[44px]"
+                aria-label="Choose color"
+              >
+                <Palette className="mr-2 h-5 w-5" style={{ color: drawColor }} />
+                Color
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-3">
+              <div className="grid grid-cols-4 gap-2">
+                {colors.map((color) => (
+                  <button
+                    key={color.value}
+                    onClick={() => {
+                      setDrawColor(color.value);
+                      toast({
+                        title: `${color.name} selected!`,
+                        description: "Start drawing with your new color.",
+                      });
+                    }}
+                    className="w-12 h-12 rounded-full border-2 border-border hover:scale-110 transition-transform"
+                    style={{ backgroundColor: color.value }}
+                    aria-label={`Select ${color.name} color`}
+                    title={color.name}
+                  />
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+          
           <Button 
             onClick={clearCanvas} 
             variant="destructive"
