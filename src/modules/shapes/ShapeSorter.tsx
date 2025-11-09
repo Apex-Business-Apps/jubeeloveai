@@ -66,10 +66,10 @@ export default function ShapeSorter() {
       />
       <div className="shape-sorter-container">
         <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-center mb-2 text-foreground">
+          <h1 className="text-3xl md:text-4xl font-bold text-center mb-2 text-primary">
             Find the {targetShape}!
           </h1>
-          <p className="text-xl text-center text-muted-foreground mb-4">
+          <p className="text-xl text-center text-primary mb-4">
             Current Score: {score}
           </p>
           <p className="text-center text-sm text-muted-foreground max-w-md mx-auto">
@@ -87,13 +87,13 @@ export default function ShapeSorter() {
               aria-label={`Select ${shape}. ${shapeDescriptions[shape]}`}
             >
               <span className="text-8xl" aria-hidden="true">{getShapeEmoji(shape)}</span>
-              <span className="text-xl mt-2 capitalize font-semibold">{shape}</span>
+              <span className="text-xl mt-2 capitalize font-semibold text-primary">{shape}</span>
             </Button>
           ))}
         </div>
 
         <div className="mt-8 text-center">
-          <p className="text-lg text-foreground font-medium">
+          <p className="text-lg text-primary font-medium">
             Tap the {targetShape} <span aria-hidden="true">{getShapeEmoji(targetShape)}</span>
           </p>
         </div>

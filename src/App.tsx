@@ -91,10 +91,10 @@ function HomePage() {
         description="Welcome to Jubee's World! Choose from writing practice, shape recognition, and more fun learning activities."
       />
       <div className="home-page">
-        <h1 className="text-4xl md:text-5xl font-bold text-center mt-8 text-foreground">
+        <h1 className="text-4xl md:text-5xl font-bold text-center mt-8 text-primary">
           Welcome to Jubee's World!
         </h1>
-        <p className="text-center text-muted-foreground mt-4 px-4 max-w-2xl mx-auto">
+        <p className="text-center text-primary mt-4 px-4 max-w-2xl mx-auto">
           Learn and play with Jubee the friendly bee! Choose an activity below to start your educational adventure.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 max-w-4xl mx-auto">
@@ -144,8 +144,8 @@ function GameCard({ title, icon, path, description }: GameCardProps) {
         className="w-24 h-24 transition-transform group-hover:scale-110" 
         aria-hidden="true"
       />
-      <span className="text-2xl md:text-3xl mt-4 font-bold text-foreground">{title}</span>
-      <p className="text-sm text-muted-foreground mt-2 px-4">{description}</p>
+      <span className="text-2xl md:text-3xl mt-4 font-bold text-primary">{title}</span>
+      <p className="text-sm text-primary mt-2 px-4">{description}</p>
     </button>
   );
 }
@@ -175,7 +175,7 @@ function TabButton({ path, icon, label }: TabButtonProps) {
     <button
       onClick={() => navigate(path)}
       className={`tab-item min-h-[44px] min-w-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all ${
-        isActive ? 'opacity-100 scale-110' : 'opacity-70'
+        isActive ? 'scale-110' : ''
       }`}
       aria-label={`Navigate to ${label}`}
       aria-current={isActive ? 'page' : undefined}
@@ -186,7 +186,7 @@ function TabButton({ path, icon, label }: TabButtonProps) {
         className="w-8 h-8" 
         aria-hidden="true"
       />
-      <span className="text-xs font-medium">{label}</span>
+      <span className="text-xs font-medium text-primary">{label}</span>
     </button>
   );
 }

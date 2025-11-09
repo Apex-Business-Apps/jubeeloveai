@@ -115,10 +115,10 @@ export default function WritingCanvas() {
       />
       <div className="writing-canvas-container">
         <header>
-          <h1 className="text-3xl md:text-4xl font-bold text-center mb-2 text-foreground">
+          <h1 className="text-3xl md:text-4xl font-bold text-center mb-2 text-primary">
             Trace the Letter: {currentLetter}
           </h1>
-          <p className="text-center text-muted-foreground mb-4">
+          <p className="text-center text-primary mb-4">
             Use your finger or mouse to trace the letter outline
           </p>
         </header>

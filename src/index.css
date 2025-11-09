@@ -146,7 +146,7 @@ All colors MUST be HSL.
 .tab-item {
   @apply flex flex-col items-center justify-center gap-1;
   @apply transition-all duration-200 hover:scale-110 active:scale-95;
-  @apply text-foreground;
+  @apply text-primary;
   padding: 8px 16px;
 }
 
