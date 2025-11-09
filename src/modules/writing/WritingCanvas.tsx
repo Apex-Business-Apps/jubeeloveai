@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from '@/hooks/use-toast';
 import { Eraser, SkipForward, Palette } from 'lucide-react';
+import { useAudioEffects } from '@/hooks/useAudioEffects';
 
 const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 
@@ -27,6 +28,7 @@ export default function WritingCanvas() {
   const [drawColor, setDrawColor] = useState('#3b82f6');
   const { speak, triggerAnimation } = useJubeeStore();
   const { addScore } = useGameStore();
+  const { playDrawSound, playClearSound, playSuccessSound } = useAudioEffects();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -51,6 +53,7 @@ export default function WritingCanvas() {
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     setIsDrawing(true);
+    playDrawSound();
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -88,6 +91,7 @@ export default function WritingCanvas() {
   };
 
   const clearCanvas = () => {
+    playClearSound();
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -109,6 +113,7 @@ export default function WritingCanvas() {
   };
 
   const nextLetter = () => {
+    playSuccessSound();
     const currentIndex = letters.indexOf(currentLetter);
     const nextIndex = (currentIndex + 1) % letters.length;
     const nextLetterValue = letters[nextIndex];
