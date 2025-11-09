@@ -9,7 +9,7 @@ import { useJubeeStore } from './store/useJubeeStore';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SEO } from './components/SEO';
 import { LoadingScreen } from './components/LoadingScreen';
-import { HomeIcon, PencilIcon, StarIcon, TrophyIcon, GiftIcon, GearIcon } from '@/components/icons/Icons';
+import { HomeIcon, PencilIcon, StarIcon, ChartIcon, GiftIcon, GearIcon } from '@/components/icons/Icons';
 
 const WritingCanvas = lazy(() => import('./modules/writing/WritingCanvas'));
 const ShapeSorter = lazy(() => import('./modules/shapes/ShapeSorter'));
@@ -116,7 +116,7 @@ function HomePage() {
           />
           <GameCard 
             title="My Progress" 
-            icon={<TrophyIcon className="w-24 h-24" />}
+            icon={<ChartIcon className="w-24 h-24" />}
             path="/progress"
             description="See your scores, achievements, and learning stats"
           />
@@ -169,7 +169,7 @@ function Navigation() {
       <TabButton path="/" icon={<HomeIcon className="w-8 h-8" />} label="Home" />
       <TabButton path="/write" icon={<PencilIcon className="w-8 h-8" />} label="Write" />
       <TabButton path="/shapes" icon={<StarIcon className="w-8 h-8" />} label="Shapes" />
-      <TabButton path="/progress" icon={<TrophyIcon className="w-8 h-8" />} label="Progress" />
+      <TabButton path="/progress" icon={<ChartIcon className="w-8 h-8" />} label="Progress" />
       <TabButton path="/stickers" icon={<GiftIcon className="w-8 h-8" />} label="Stickers" />
       <TabButton path="/settings" icon={<GearIcon className="w-8 h-8" />} label="Settings" />
     </nav>

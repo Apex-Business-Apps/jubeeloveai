@@ -21,9 +21,9 @@ export const StarIcon: React.FC<IconProps> = ({ className = 'w-6 h-6' }) => (
   </svg>
 );
 
-export const TrophyIcon: React.FC<IconProps> = ({ className = 'w-6 h-6' }) => (
+export const ChartIcon: React.FC<IconProps> = ({ className = 'w-6 h-6' }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
-    <path d="M7 2h10v3h3a2 2 0 0 1 2 2c0 3.87-3.13 7-7 7H9C5.13 14 2 10.87 2 7a2 2 0 0 1 2-2h3V2zm10 3V4H7v1H4c0 3.31 2.69 6 6 6h4c3.31 0 6-2.69 6-6h-3zm-5 9a5 5 0 0 0 5 5v2H7v-2a5 5 0 0 0 5-5z" />
+    <path d="M3 13h2v7H3v-7zm4-6h2v13H7V7zm4-4h2v17h-2V3zm4 9h2v8h-2v-8zm4-3h2v11h-2V9z" />
   </svg>
 );
 
