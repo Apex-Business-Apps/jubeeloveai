@@ -178,7 +178,7 @@ function Navigation() {
 
 interface TabButtonProps {
   path: string;
-  icon: string;
+  icon: React.ReactNode;
   label: string;
 }
 
@@ -196,13 +196,9 @@ function TabButton({ path, icon, label }: TabButtonProps) {
       aria-label={`Navigate to ${label}`}
       aria-current={isActive ? 'page' : undefined}
     >
-      <img 
-        src={icon} 
-        alt="" 
-        className="w-8 h-8 object-contain" 
-        aria-hidden="true"
-        style={{ background: 'transparent', mixBlendMode: 'multiply' }}
-      />
+      <div className="w-8 h-8 text-primary flex items-center justify-center" aria-hidden="true">
+        {icon}
+      </div>
       <span className="text-xs font-medium text-primary">{label}</span>
     </button>
   );
