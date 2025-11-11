@@ -168,13 +168,13 @@ function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 max-w-4xl mx-auto">
           <GameCard
             title="Writing Practice"
-            icon={<PencilIcon className="w-24 h-24" />}
+            icon="✏️"
             path="/write"
             description="Practice your writing skills with fun drawing activities"
           />
           <GameCard
             title="Shape Recognition"
-            icon={<StarIcon className="w-24 h-24" />}
+            icon="⭐"
             path="/shapes"
             description="Learn and identify different shapes"
           />
