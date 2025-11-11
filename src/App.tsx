@@ -192,13 +192,13 @@ function HomePage() {
           />
           <GameCard
             title="My Progress"
-            icon={<ChartIcon className="w-24 h-24" />}
+            icon="📊"
             path="/progress"
             description="See your scores, achievements, and learning stats"
           />
           <GameCard
             title="Sticker Collection"
-            icon={<GiftIcon className="w-24 h-24" />}
+            icon="🎁"
             path="/stickers"
             description="Collect and unlock colorful stickers and rewards"
           />
