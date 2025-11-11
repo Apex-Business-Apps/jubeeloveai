@@ -1,7 +1,7 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useMemo } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Text } from '@react-three/drei'
-import { Group, Mesh, MeshStandardMaterial } from 'three'
+import { Group, Mesh } from 'three'
 import { useJubeeStore } from '../../store/useJubeeStore'
 import * as THREE from 'three'
 
@@ -9,6 +9,32 @@ interface JubeeProps {
   position?: [number, number, number]
   animation?: string
 }
+
+// Constants moved outside component for performance
+const GREETINGS = [
+  "Buzz buzz! Hello!",
+  "Let's learn together!",
+  "You're doing great!",
+  "I'm so happy to see you!",
+  "Ready for an adventure?"
+] as const
+
+const COLORS = {
+  male: {
+    body: '#FFD700',
+    accent: '#4A90E2',
+    stripes: '#2E5C8A'
+  },
+  female: {
+    body: '#FFD700',
+    accent: '#FF69B4',
+    stripes: '#FF1493'
+  }
+} as const
+
+// Reusable vectors for performance
+const tempVector = new THREE.Vector3()
+const targetScale = new THREE.Vector3()
 
 export function JubeeMascot({ position = [3, -2, 0], animation = 'idle' }: JubeeProps) {
   const group = useRef<Group>(null)
@@ -18,34 +44,21 @@ export function JubeeMascot({ position = [3, -2, 0], animation = 'idle' }: Jubee
   const rightWingRef = useRef<Mesh>(null)
   const { camera } = useThree()
   const [isHovered, setIsHovered] = useState(false)
-  const { gender, speechText, updatePosition, speak, triggerAnimation } = useJubeeStore()
+  const { gender, speechText, updatePosition, speak, triggerAnimation, cleanup } = useJubeeStore()
 
-  const greetings = [
-    "Buzz buzz! Hello!",
-    "Let's learn together!",
-    "You're doing great!",
-    "I'm so happy to see you!",
-    "Ready for an adventure?"
-  ]
-
-  const colors = {
-    male: {
-      body: '#FFD700', // Gold
-      accent: '#4A90E2', // Blue
-      stripes: '#2E5C8A' // Dark blue
-    },
-    female: {
-      body: '#FFD700', // Gold
-      accent: '#FF69B4', // Pink
-      stripes: '#FF1493' // Deep pink
+  // Memoize current colors
+  const currentColors = useMemo(() => COLORS[gender], [gender])
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanup()
     }
-  }
-
-  const currentColors = colors[gender]
+  }, [cleanup])
 
   const handleClick = (e: any) => {
     e.stopPropagation()
-    const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)]
+    const randomGreeting = GREETINGS[Math.floor(Math.random() * GREETINGS.length)]
     speak(randomGreeting)
     triggerAnimation('celebrate')
   }
@@ -109,11 +122,10 @@ export function JubeeMascot({ position = [3, -2, 0], animation = 'idle' }: Jubee
       group.current.rotation.y = 0
     }
 
-    // Hover effect
-    if (isHovered && group.current) {
-      group.current.scale.lerp(new THREE.Vector3(1.1, 1.1, 1.1), 0.1)
-    } else if (group.current) {
-      group.current.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1)
+    // Hover effect - reuse vector objects
+    if (group.current) {
+      targetScale.set(isHovered ? 1.1 : 1, isHovered ? 1.1 : 1, isHovered ? 1.1 : 1)
+      group.current.scale.lerp(targetScale, 0.1)
     }
   })
 
