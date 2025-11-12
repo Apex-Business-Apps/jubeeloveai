@@ -16,6 +16,7 @@ import { StickerBook } from './components/rewards/StickerBook';
 import { PageTransition } from './components/PageTransition';
 import { SessionMonitor } from './components/SessionMonitor';
 import { ChildSelector } from './components/ChildSelector';
+import { useAchievementTracker } from './hooks/useAchievementTracker';
 
 const WritingCanvas = lazy(() => import('./modules/writing/WritingCanvas'));
 const ShapeSorter = lazy(() => import('./modules/shapes/ShapeSorter'));
@@ -38,6 +39,20 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function AchievementTracker() {
+  const { trackActivity, checkAchievements } = useAchievementTracker();
+  const setActivityCompleteCallback = useGameStore(state => state.setActivityCompleteCallback);
+
+  useEffect(() => {
+    setActivityCompleteCallback(() => {
+      trackActivity();
+      checkAchievements();
+    });
+  }, [setActivityCompleteCallback, trackActivity, checkAchievements]);
+
+  return null;
+}
 
 export default function App() {
   const [showPersonalization, setShowPersonalization] = useState(false);
@@ -73,6 +88,7 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
+          <AchievementTracker />
           <SEO />
           <div className="app" data-theme={currentTheme}>
             {/* Header with score and action buttons */}

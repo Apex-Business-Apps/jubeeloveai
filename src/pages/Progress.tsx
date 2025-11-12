@@ -1,11 +1,20 @@
 import { SEO } from '@/components/SEO';
 import { useGameStore } from '@/store/useGameStore';
+import { useAchievementStore } from '@/store/useAchievementStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Trophy, Star, Award, Target } from 'lucide-react';
+import { AchievementList } from '@/components/achievements/AchievementList';
+import { StreakDisplay } from '@/components/achievements/StreakDisplay';
+import { useEffect } from 'react';
 
 export default function ProgressPage() {
   const { score, stickers, completedActivities } = useGameStore();
+  const { achievements, initializeAchievements } = useAchievementStore();
+
+  useEffect(() => {
+    initializeAchievements();
+  }, [initializeAchievements]);
 
   const totalActivities = 10; // Writing (10 letters) + Shapes (4) + future modules
   const progressPercentage = (completedActivities.length / totalActivities) * 100;
@@ -120,6 +129,12 @@ export default function ProgressPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Streak Display */}
+        <StreakDisplay />
+
+        {/* Achievement System */}
+        <AchievementList achievements={achievements} />
       </div>
     </>
   );
