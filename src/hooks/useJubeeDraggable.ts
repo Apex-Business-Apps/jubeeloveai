@@ -63,11 +63,14 @@ export function useJubeeDraggable(containerRef: React.RefObject<HTMLDivElement>)
     const viewportHeight = window.innerHeight
     const viewportWidth = window.innerWidth
     
+    // Calculate absolute maximum right that keeps container fully visible
+    const absoluteMaxRight = viewportWidth - CONTAINER_WIDTH - SAFE_MARGIN
+    
     // Enhanced boundary calculation with generous minimums
     const minBottom = 180 // Ensure above bottom navigation
-    const minRight = 100 // Ensure left edge visibility
+    const minRight = 100 // Minimum distance from right edge
     const maxBottom = Math.max(minBottom, viewportHeight - CONTAINER_HEIGHT - SAFE_MARGIN)
-    const maxRight = Math.max(minRight, viewportWidth - CONTAINER_WIDTH - SAFE_MARGIN)
+    const maxRight = Math.max(minRight, Math.min(absoluteMaxRight, 300)) // Cap at 300px from right edge
     
     // Additional NaN/Infinity guards
     const safeBottom = Number.isFinite(bottom) ? bottom : 200

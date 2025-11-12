@@ -112,13 +112,16 @@ export function useJubeeVisibilityMonitor(containerRef: React.RefObject<HTMLDivE
     const viewportHeight = window.innerHeight
     const viewportWidth = window.innerWidth
     
+    // Calculate absolute maximum right that keeps container fully visible
+    const absoluteMaxRight = viewportWidth - CONTAINER_WIDTH - SAFE_MARGIN
+    
     // Calculate minimum safe positions to ensure full visibility
     const minBottom = 180
     const minRight = 100
     
     // Calculate maximum safe boundaries
     const maxBottom = Math.max(minBottom, viewportHeight - CONTAINER_HEIGHT - SAFE_MARGIN)
-    const maxRight = Math.max(minRight, viewportWidth - CONTAINER_WIDTH - SAFE_MARGIN)
+    const maxRight = Math.max(minRight, Math.min(absoluteMaxRight, 300))
     
     // Calculate a safe position that's definitely visible with proper bounds
     const safePosition = {
@@ -146,13 +149,16 @@ export function useJubeeVisibilityMonitor(containerRef: React.RefObject<HTMLDivE
     const viewportHeight = window.innerHeight
     const viewportWidth = window.innerWidth
     
+    // Calculate absolute maximum right that keeps container fully visible
+    const absoluteMaxRight = viewportWidth - CONTAINER_WIDTH - SAFE_MARGIN
+    
     // Calculate minimum safe positions
     const minBottom = 180
     const minRight = 100
     
     // Calculate maximum safe boundaries
     const maxBottom = Math.max(minBottom, viewportHeight - CONTAINER_HEIGHT - SAFE_MARGIN)
-    const maxRight = Math.max(minRight, viewportWidth - CONTAINER_WIDTH - SAFE_MARGIN)
+    const maxRight = Math.max(minRight, Math.min(absoluteMaxRight, 300))
     
     // Ensure position is safe and visible with proper boundary enforcement
     const safePosition = {

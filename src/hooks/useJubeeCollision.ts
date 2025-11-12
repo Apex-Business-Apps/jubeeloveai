@@ -61,11 +61,16 @@ export function useJubeeCollision(containerRef: React.RefObject<HTMLDivElement>)
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
     
+    // Calculate absolute maximum right that keeps container fully visible
+    // right value is distance from right edge, so we need to ensure:
+    // viewportWidth - right - CONTAINER_WIDTH >= 0 (left edge is on screen)
+    const absoluteMaxRight = viewportWidth - CONTAINER_WIDTH - SAFE_MARGIN
+    
     // Enhanced boundary calculation with generous minimums to prevent clipping
     const minBottom = 180 // Ensure above bottom navigation
-    const minRight = 100 // Ensure left edge visibility
+    const minRight = 100 // Minimum distance from right edge
     const maxBottom = Math.max(minBottom, viewportHeight - CONTAINER_HEIGHT - SAFE_MARGIN)
-    const maxRight = Math.max(minRight, viewportWidth - CONTAINER_WIDTH - SAFE_MARGIN)
+    const maxRight = Math.max(minRight, Math.min(absoluteMaxRight, 300)) // Cap at 300px from right edge
     
     // Validate with defensive boundaries
     const validated = {
@@ -75,8 +80,8 @@ export function useJubeeCollision(containerRef: React.RefObject<HTMLDivElement>)
     
     // Additional safety check: ensure values are finite and not NaN
     return {
-      bottom: Number.isFinite(validated.bottom) ? validated.bottom : 120,
-      right: Number.isFinite(validated.right) ? validated.right : 80
+      bottom: Number.isFinite(validated.bottom) ? validated.bottom : 200,
+      right: Number.isFinite(validated.right) ? validated.right : 100
     }
   }, [])
 
