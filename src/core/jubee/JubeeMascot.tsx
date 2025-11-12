@@ -34,18 +34,34 @@ const GREETINGS = [
   "Ready for an adventure?"
 ] as const
 
-const COLORS = {
-  male: {
-    body: '#FFD700',
-    accent: '#4A90E2',
-    stripes: '#2E5C8A'
-  },
-  female: {
-    body: '#FFD700',
-    accent: '#FF69B4',
-    stripes: '#FF1493'
-  }
-} as const
+// Function to get CSS variable color value
+const getColorValue = (varName: string): string => {
+  if (typeof window === 'undefined') return '#FFD700'
+  const root = document.documentElement
+  const value = getComputedStyle(root).getPropertyValue(varName).trim()
+  if (!value) return '#FFD700'
+  // Convert HSL to hex-like string for Three.js
+  const [h, s, l] = value.split(' ').map(v => parseFloat(v))
+  return `hsl(${h}, ${s}%, ${l}%)`
+}
+
+// Get colors from design system
+const getJubeeColors = (gender: 'male' | 'female') => ({
+  body: getColorValue('--jubee-body'),
+  bodyGlow: getColorValue('--jubee-body-glow'),
+  stripe: getColorValue('--jubee-stripe'),
+  accent: gender === 'male' 
+    ? getColorValue('--jubee-boy-accent') 
+    : getColorValue('--jubee-girl-accent'),
+  accentDark: gender === 'male'
+    ? getColorValue('--jubee-boy-accent-dark')
+    : getColorValue('--jubee-girl-accent-dark'),
+  eyeWhite: getColorValue('--jubee-eye-white'),
+  eyePupil: getColorValue('--jubee-eye-pupil'),
+  cheek: getColorValue('--jubee-cheek'),
+  wing: getColorValue('--jubee-wing'),
+  wingGlow: getColorValue('--jubee-wing-glow')
+})
 
 // Reusable vectors for performance
 const tempVector = new THREE.Vector3()
@@ -64,8 +80,8 @@ export function JubeeMascot({ position = [3, -2, 0], animation = 'idle' }: Jubee
   const [blinkTime, setBlinkTime] = useState(0)
   const { gender, speechText, updatePosition, speak, triggerAnimation, cleanup } = useJubeeStore()
 
-  // Memoize current colors
-  const currentColors = useMemo(() => COLORS[gender], [gender])
+  // Memoize current colors from design system
+  const currentColors = useMemo(() => getJubeeColors(gender), [gender])
   
   // Mount/unmount logging
   useEffect(() => {
@@ -184,41 +200,55 @@ export function JubeeMascot({ position = [3, -2, 0], animation = 'idle' }: Jubee
 
       {/* Body - large sphere */}
       <mesh ref={bodyRef} position={[0, 0, 0]} castShadow receiveShadow>
-        <sphereGeometry args={[0.5, 32, 32]} />
+        <sphereGeometry args={[0.5, 64, 64]} />
         <meshStandardMaterial
           color={currentColors.body}
-          roughness={0.4}
-          metalness={0.2}
-          emissive={currentColors.body}
-          emissiveIntensity={0.1}
+          roughness={0.2}
+          metalness={0.4}
+          emissive={currentColors.bodyGlow}
+          emissiveIntensity={0.3}
         />
       </mesh>
 
       {/* Black stripes on body */}
       <mesh position={[0, 0.15, 0]} castShadow>
-        <sphereGeometry args={[0.51, 32, 32, 0, Math.PI * 2, 0.7, 0.3]} />
-        <meshStandardMaterial color="#000000" />
+        <sphereGeometry args={[0.51, 64, 64, 0, Math.PI * 2, 0.7, 0.3]} />
+        <meshStandardMaterial 
+          color={currentColors.stripe}
+          roughness={0.3}
+          metalness={0.1}
+        />
       </mesh>
       <mesh position={[0, -0.15, 0]} castShadow>
-        <sphereGeometry args={[0.51, 32, 32, 0, Math.PI * 2, 1.3, 0.3]} />
-        <meshStandardMaterial color="#000000" />
+        <sphereGeometry args={[0.51, 64, 64, 0, Math.PI * 2, 1.3, 0.3]} />
+        <meshStandardMaterial 
+          color={currentColors.stripe}
+          roughness={0.3}
+          metalness={0.1}
+        />
       </mesh>
 
       {/* Accent stripe (gender-specific color) */}
       <mesh position={[0, -0.3, 0]} castShadow>
-        <sphereGeometry args={[0.52, 32, 32, 0, Math.PI * 2, 1.6, 0.2]} />
-        <meshStandardMaterial color={currentColors.stripes} />
+        <sphereGeometry args={[0.52, 64, 64, 0, Math.PI * 2, 1.6, 0.2]} />
+        <meshStandardMaterial 
+          color={currentColors.accentDark}
+          roughness={0.2}
+          metalness={0.5}
+          emissive={currentColors.accent}
+          emissiveIntensity={0.2}
+        />
       </mesh>
 
       {/* Head - medium sphere */}
       <mesh ref={headRef} position={[0, 0.65, 0]} castShadow receiveShadow>
-        <sphereGeometry args={[0.35, 32, 32]} />
+        <sphereGeometry args={[0.35, 64, 64]} />
         <meshStandardMaterial
           color={currentColors.body}
-          roughness={0.4}
-          metalness={0.2}
-          emissive={currentColors.body}
-          emissiveIntensity={0.1}
+          roughness={0.2}
+          metalness={0.4}
+          emissive={currentColors.bodyGlow}
+          emissiveIntensity={0.3}
         />
       </mesh>
 
@@ -226,88 +256,125 @@ export function JubeeMascot({ position = [3, -2, 0], animation = 'idle' }: Jubee
       <group position={[0, 0.65, 0]}>
         {/* Left eye white */}
         <mesh ref={leftEyeRef} position={[-0.15, 0.08, 0.28]} castShadow>
-          <sphereGeometry args={[0.13, 16, 16]} />
-          <meshStandardMaterial color="#FFFFFF" />
+          <sphereGeometry args={[0.13, 32, 32]} />
+          <meshStandardMaterial 
+            color={currentColors.eyeWhite}
+            roughness={0.1}
+            metalness={0.1}
+          />
         </mesh>
         {/* Left pupil */}
         <mesh position={[-0.15, 0.08, 0.38]} castShadow>
-          <sphereGeometry args={[0.07, 16, 16]} />
-          <meshStandardMaterial color="#000000" />
+          <sphereGeometry args={[0.07, 32, 32]} />
+          <meshStandardMaterial 
+            color={currentColors.eyePupil}
+            roughness={0.8}
+          />
         </mesh>
         {/* Left eye shine - multiple for sparkle effect */}
         <mesh position={[-0.13, 0.13, 0.43]} castShadow>
           <sphereGeometry args={[0.035, 16, 16]} />
-          <meshBasicMaterial color="#FFFFFF" />
+          <meshBasicMaterial color={currentColors.eyeWhite} />
         </mesh>
         <mesh position={[-0.16, 0.1, 0.42]} castShadow>
           <sphereGeometry args={[0.02, 16, 16]} />
-          <meshBasicMaterial color="#FFFFFF" transparent opacity={0.7} />
+          <meshBasicMaterial color={currentColors.eyeWhite} transparent opacity={0.7} />
         </mesh>
 
         {/* Right eye white */}
         <mesh ref={rightEyeRef} position={[0.15, 0.08, 0.28]} castShadow>
-          <sphereGeometry args={[0.13, 16, 16]} />
-          <meshStandardMaterial color="#FFFFFF" />
+          <sphereGeometry args={[0.13, 32, 32]} />
+          <meshStandardMaterial 
+            color={currentColors.eyeWhite}
+            roughness={0.1}
+            metalness={0.1}
+          />
         </mesh>
         {/* Right pupil */}
         <mesh position={[0.15, 0.08, 0.38]} castShadow>
-          <sphereGeometry args={[0.07, 16, 16]} />
-          <meshStandardMaterial color="#000000" />
+          <sphereGeometry args={[0.07, 32, 32]} />
+          <meshStandardMaterial 
+            color={currentColors.eyePupil}
+            roughness={0.8}
+          />
         </mesh>
         {/* Right eye shine - multiple for sparkle effect */}
         <mesh position={[0.17, 0.13, 0.43]} castShadow>
           <sphereGeometry args={[0.035, 16, 16]} />
-          <meshBasicMaterial color="#FFFFFF" />
+          <meshBasicMaterial color={currentColors.eyeWhite} />
         </mesh>
         <mesh position={[0.14, 0.1, 0.42]} castShadow>
           <sphereGeometry args={[0.02, 16, 16]} />
-          <meshBasicMaterial color="#FFFFFF" transparent opacity={0.7} />
+          <meshBasicMaterial color={currentColors.eyeWhite} transparent opacity={0.7} />
         </mesh>
       </group>
 
       {/* Smile - cute torus */}
       <mesh position={[0, 0.55, 0.3]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-        <torusGeometry args={[0.12, 0.02, 8, 32, Math.PI]} />
-        <meshStandardMaterial color="#000000" />
+        <torusGeometry args={[0.12, 0.02, 16, 48, Math.PI]} />
+        <meshStandardMaterial 
+          color={currentColors.eyePupil}
+          roughness={0.5}
+        />
       </mesh>
 
       {/* Rosy cheeks */}
       <mesh position={[-0.28, 0.58, 0.15]} castShadow>
-        <sphereGeometry args={[0.08, 16, 16]} />
-        <meshStandardMaterial color="#FFB6C1" transparent opacity={0.6} />
+        <sphereGeometry args={[0.08, 32, 32]} />
+        <meshStandardMaterial 
+          color={currentColors.cheek} 
+          transparent 
+          opacity={0.7}
+          roughness={0.3}
+        />
       </mesh>
       <mesh position={[0.28, 0.58, 0.15]} castShadow>
-        <sphereGeometry args={[0.08, 16, 16]} />
-        <meshStandardMaterial color="#FFB6C1" transparent opacity={0.6} />
+        <sphereGeometry args={[0.08, 32, 32]} />
+        <meshStandardMaterial 
+          color={currentColors.cheek} 
+          transparent 
+          opacity={0.7}
+          roughness={0.3}
+        />
       </mesh>
 
       {/* Antennae */}
       <group>
         {/* Left antenna */}
         <mesh position={[-0.15, 0.95, 0]} castShadow>
-          <cylinderGeometry args={[0.02, 0.02, 0.3, 8]} />
-          <meshStandardMaterial color="#000000" />
+          <cylinderGeometry args={[0.02, 0.02, 0.3, 16]} />
+          <meshStandardMaterial 
+            color={currentColors.stripe}
+            roughness={0.4}
+          />
         </mesh>
         <mesh position={[-0.15, 1.12, 0]} castShadow>
-          <sphereGeometry args={[0.06, 16, 16]} />
+          <sphereGeometry args={[0.06, 32, 32]} />
           <meshStandardMaterial
             color={currentColors.accent}
             emissive={currentColors.accent}
-            emissiveIntensity={0.5}
+            emissiveIntensity={0.7}
+            roughness={0.2}
+            metalness={0.6}
           />
         </mesh>
 
         {/* Right antenna */}
         <mesh position={[0.15, 0.95, 0]} castShadow>
-          <cylinderGeometry args={[0.02, 0.02, 0.3, 8]} />
-          <meshStandardMaterial color="#000000" />
+          <cylinderGeometry args={[0.02, 0.02, 0.3, 16]} />
+          <meshStandardMaterial 
+            color={currentColors.stripe}
+            roughness={0.4}
+          />
         </mesh>
         <mesh position={[0.15, 1.12, 0]} castShadow>
-          <sphereGeometry args={[0.06, 16, 16]} />
+          <sphereGeometry args={[0.06, 32, 32]} />
           <meshStandardMaterial
             color={currentColors.accent}
             emissive={currentColors.accent}
-            emissiveIntensity={0.5}
+            emissiveIntensity={0.7}
+            roughness={0.2}
+            metalness={0.6}
           />
         </mesh>
       </group>
@@ -320,14 +387,16 @@ export function JubeeMascot({ position = [3, -2, 0], animation = 'idle' }: Jubee
         castShadow
       >
         <boxGeometry args={[0.05, 0.6, 0.4]} />
-        <meshStandardMaterial
-          color="#E0F7FA"
+        <meshPhysicalMaterial
+          color={currentColors.wing}
           transparent
-          opacity={0.4}
-          metalness={0.8}
-          roughness={0.1}
-          emissive="#B3E5FC"
-          emissiveIntensity={0.2}
+          opacity={0.5}
+          metalness={0.9}
+          roughness={0.05}
+          emissive={currentColors.wingGlow}
+          emissiveIntensity={0.4}
+          transmission={0.8}
+          thickness={0.5}
         />
       </mesh>
       <mesh
@@ -337,14 +406,16 @@ export function JubeeMascot({ position = [3, -2, 0], animation = 'idle' }: Jubee
         castShadow
       >
         <boxGeometry args={[0.05, 0.6, 0.4]} />
-        <meshStandardMaterial
-          color="#E0F7FA"
+        <meshPhysicalMaterial
+          color={currentColors.wing}
           transparent
-          opacity={0.4}
-          metalness={0.8}
-          roughness={0.1}
-          emissive="#B3E5FC"
-          emissiveIntensity={0.2}
+          opacity={0.5}
+          metalness={0.9}
+          roughness={0.05}
+          emissive={currentColors.wingGlow}
+          emissiveIntensity={0.4}
+          transmission={0.8}
+          thickness={0.5}
         />
       </mesh>
 
@@ -354,31 +425,55 @@ export function JubeeMascot({ position = [3, -2, 0], animation = 'idle' }: Jubee
         <group position={[0, 0.35, 0.3]}>
           <mesh position={[-0.08, 0, 0]} rotation={[0, 0, Math.PI / 4]}>
             <boxGeometry args={[0.12, 0.08, 0.04]} />
-            <meshStandardMaterial color={currentColors.accent} />
+            <meshStandardMaterial 
+              color={currentColors.accent}
+              roughness={0.3}
+              metalness={0.5}
+            />
           </mesh>
           <mesh position={[0.08, 0, 0]} rotation={[0, 0, -Math.PI / 4]}>
             <boxGeometry args={[0.12, 0.08, 0.04]} />
-            <meshStandardMaterial color={currentColors.accent} />
+            <meshStandardMaterial 
+              color={currentColors.accent}
+              roughness={0.3}
+              metalness={0.5}
+            />
           </mesh>
           <mesh>
             <boxGeometry args={[0.05, 0.08, 0.05]} />
-            <meshStandardMaterial color={currentColors.stripes} />
+            <meshStandardMaterial 
+              color={currentColors.accentDark}
+              roughness={0.3}
+              metalness={0.5}
+            />
           </mesh>
         </group>
       ) : (
         // Bow for female
         <group position={[-0.2, 0.85, 0]}>
           <mesh position={[-0.08, 0, 0]} rotation={[0, 0, Math.PI / 6]}>
-            <sphereGeometry args={[0.1, 16, 16]} />
-            <meshStandardMaterial color={currentColors.accent} />
+            <sphereGeometry args={[0.1, 32, 32]} />
+            <meshStandardMaterial 
+              color={currentColors.accent}
+              roughness={0.2}
+              metalness={0.6}
+            />
           </mesh>
           <mesh position={[0.08, 0, 0]} rotation={[0, 0, -Math.PI / 6]}>
-            <sphereGeometry args={[0.1, 16, 16]} />
-            <meshStandardMaterial color={currentColors.accent} />
+            <sphereGeometry args={[0.1, 32, 32]} />
+            <meshStandardMaterial 
+              color={currentColors.accent}
+              roughness={0.2}
+              metalness={0.6}
+            />
           </mesh>
           <mesh>
-            <sphereGeometry args={[0.05, 16, 16]} />
-            <meshStandardMaterial color={currentColors.stripes} />
+            <sphereGeometry args={[0.05, 32, 32]} />
+            <meshStandardMaterial 
+              color={currentColors.accentDark}
+              roughness={0.2}
+              metalness={0.6}
+            />
           </mesh>
         </group>
       )}
@@ -423,19 +518,21 @@ export function JubeeMascot({ position = [3, -2, 0], animation = 'idle' }: Jubee
       <pointLight
         position={[0, 0, 0]}
         color={currentColors.accent}
-        intensity={0.8}
-        distance={3}
+        intensity={1.5}
+        distance={4}
         decay={2}
       />
       
       {/* Spotlight from above for dramatic effect */}
       <spotLight
         position={[0, 3, 2]}
-        angle={0.3}
+        angle={0.4}
         penumbra={1}
-        intensity={0.5}
-        color={currentColors.body}
+        intensity={1.2}
+        color={currentColors.bodyGlow}
         castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
       />
     </group>
   )

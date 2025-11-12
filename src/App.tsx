@@ -106,25 +106,41 @@ export default function App() {
               <div className="flex gap-3">
                 <button
                   onClick={toggleVisibility}
-                  className="action-button px-5 py-3 rounded-full text-lg font-bold text-primary-foreground bg-primary-foreground/30 border-3 border-primary-foreground shadow-lg transform hover:scale-105 transition-all"
+                  className="action-button px-6 py-3 rounded-2xl text-lg font-bold text-primary-foreground bg-card/40 backdrop-blur-sm border-2 border-primary-foreground/60 shadow-lg transform hover:scale-110 hover:shadow-xl active:scale-95 transition-all duration-200"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1))',
+                  }}
                   aria-label={isVisible ? "Hide Jubee" : "Show Jubee"}
                   title={isVisible ? "Hide Jubee" : "Show Jubee"}
                 >
-                  {isVisible ? '👁️' : '👁️‍🗨️'} {isVisible ? 'Hide' : 'Show'}
+                  <span className="flex items-center gap-2">
+                    {isVisible ? '👁️' : '👁️‍🗨️'} 
+                    <span className="font-extrabold">{isVisible ? 'Hide' : 'Show'}</span>
+                  </span>
                 </button>
                 <button
                   onClick={() => setShowPersonalization(true)}
-                  className="action-button px-5 py-3 rounded-full text-lg font-bold text-primary-foreground bg-primary-foreground/30 border-3 border-primary-foreground shadow-lg transform hover:scale-105 transition-all"
+                  className="action-button px-6 py-3 rounded-2xl text-lg font-bold text-primary-foreground bg-card/40 backdrop-blur-sm border-2 border-primary-foreground/60 shadow-lg transform hover:scale-110 hover:shadow-xl active:scale-95 transition-all duration-200"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1))',
+                  }}
                   aria-label="Customize Jubee"
                 >
-                  🐝 Customize
+                  <span className="flex items-center gap-2">
+                    🐝 <span className="font-extrabold">Customize</span>
+                  </span>
                 </button>
                 <button
                   onClick={() => setShowStickerBook(true)}
-                  className="action-button px-5 py-3 rounded-full text-lg font-bold text-primary-foreground bg-primary-foreground/30 border-3 border-primary-foreground shadow-lg transform hover:scale-105 transition-all"
+                  className="action-button px-6 py-3 rounded-2xl text-lg font-bold text-primary-foreground bg-card/40 backdrop-blur-sm border-2 border-primary-foreground/60 shadow-lg transform hover:scale-110 hover:shadow-xl active:scale-95 transition-all duration-200"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1))',
+                  }}
                   aria-label="View Sticker Collection"
                 >
-                  📚 Stickers
+                  <span className="flex items-center gap-2">
+                    📚 <span className="font-extrabold">Stickers</span>
+                  </span>
                 </button>
               </div>
             </header>
@@ -154,9 +170,16 @@ export default function App() {
                   }}
                 >
                   <Canvas 
-                    camera={{ position: [0, 0, 5] }}
+                    camera={{ position: [0, 0, 5], fov: 50 }}
+                    shadows
+                    gl={{ 
+                      antialias: true,
+                      alpha: true,
+                      powerPreference: "high-performance"
+                    }}
                     onCreated={({ gl }) => {
                       console.log('[Jubee] Canvas created successfully');
+                      gl.setClearColor('#000000', 0)
                       // Handle WebGL context loss
                       gl.domElement.addEventListener('webglcontextlost', (event) => {
                         event.preventDefault();
@@ -170,8 +193,24 @@ export default function App() {
                       });
                     }}
                   >
-                    <ambientLight intensity={0.5} />
-                    <spotLight position={[10, 10, 10]} />
+                    <ambientLight intensity={1.2} />
+                    <directionalLight 
+                      position={[5, 5, 5]} 
+                      intensity={1.5}
+                      castShadow
+                      shadow-mapSize-width={2048}
+                      shadow-mapSize-height={2048}
+                    />
+                    <directionalLight 
+                      position={[-5, 3, -5]} 
+                      intensity={0.8}
+                      color="#ffd700"
+                    />
+                    <hemisphereLight 
+                      color="#87CEEB" 
+                      groundColor="#FFD700" 
+                      intensity={0.6} 
+                    />
                     <Suspense fallback={null}>
                       <JubeeMascot
                         position={[jubeePosition.x, jubeePosition.y, jubeePosition.z]}

@@ -74,6 +74,20 @@ All colors MUST be HSL.
     --shadow-accent: 0 8px 20px hsl(45 100% 59% / 0.3);
     --shadow-elevated: 0 10px 40px hsl(0 100% 59% / 0.3);
     --shadow-reward: 0 20px 60px hsl(0 100% 59% / 0.5);
+    
+    /* Jubee mascot colors */
+    --jubee-body: 45 100% 60%;
+    --jubee-body-glow: 45 100% 75%;
+    --jubee-stripe: 0 0% 0%;
+    --jubee-boy-accent: 217 91% 60%;
+    --jubee-boy-accent-dark: 213 83% 47%;
+    --jubee-girl-accent: 330 81% 60%;
+    --jubee-girl-accent-dark: 330 65% 45%;
+    --jubee-eye-white: 0 0% 100%;
+    --jubee-eye-pupil: 0 0% 0%;
+    --jubee-cheek: 350 100% 88%;
+    --jubee-wing: 191 77% 91%;
+    --jubee-wing-glow: 195 53% 79%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -127,6 +141,13 @@ All colors MUST be HSL.
     --gradient-intermediate: linear-gradient(135deg, hsl(3 100% 65%), hsl(0 100% 60%));
     --gradient-expert: linear-gradient(135deg, hsl(291 64% 42%), hsl(291 44% 51%));
     --gradient-reward: linear-gradient(135deg, hsl(45 100% 60%), hsl(3 100% 65%));
+    
+    /* Jubee mascot colors - dark mode */
+    --jubee-body: 45 100% 65%;
+    --jubee-body-glow: 45 100% 80%;
+    --jubee-wing: 191 77% 91%;
+    --jubee-wing-glow: 195 53% 79%;
+    
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -153,17 +174,18 @@ All colors MUST be HSL.
   position: fixed;
   bottom: 80px;
   right: 30px;
-  width: 300px;
-  height: 300px;
+  width: 400px;
+  height: 400px;
   z-index: 30;
   pointer-events: auto;
-  filter: drop-shadow(0 0 20px hsl(var(--primary) / 0.4));
+  filter: drop-shadow(0 0 30px hsl(var(--jubee-body) / 0.6));
   transition: var(--transition-smooth);
 }
 
 .jubee-container:hover {
-  filter: drop-shadow(0 0 30px hsl(var(--primary) / 0.6));
-  transform: scale(1.05);
+  filter: drop-shadow(0 0 50px hsl(var(--jubee-body) / 0.8)) 
+          drop-shadow(0 0 80px hsl(var(--jubee-body-glow) / 0.4));
+  transform: scale(1.08);
 }
 
 .main-content {
