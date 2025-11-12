@@ -61,8 +61,9 @@ export default function App() {
   const [showPersonalization, setShowPersonalization] = useState(false);
   const [showStickerBook, setShowStickerBook] = useState(false);
   const [showChildSelector, setShowChildSelector] = useState(false);
+  const [canvasError, setCanvasError] = useState(false);
   const { currentTheme, updateTheme, score } = useGameStore();
-  const { position: jubeePosition, currentAnimation: jubeeAnimation } = useJubeeStore();
+  const { position: jubeePosition, currentAnimation: jubeeAnimation, isVisible, toggleVisibility } = useJubeeStore();
   const { children, activeChildId } = useParentalStore();
 
   useEffect(() => {
@@ -104,6 +105,14 @@ export default function App() {
               {/* Action buttons */}
               <div className="flex gap-3">
                 <button
+                  onClick={toggleVisibility}
+                  className="action-button px-5 py-3 rounded-full text-lg font-bold text-primary-foreground bg-primary-foreground/30 border-3 border-primary-foreground shadow-lg transform hover:scale-105 transition-all"
+                  aria-label={isVisible ? "Hide Jubee" : "Show Jubee"}
+                  title={isVisible ? "Hide Jubee" : "Show Jubee"}
+                >
+                  {isVisible ? '👁️' : '👁️‍🗨️'} {isVisible ? 'Hide' : 'Show'}
+                </button>
+                <button
                   onClick={() => setShowPersonalization(true)}
                   className="action-button px-5 py-3 rounded-full text-lg font-bold text-primary-foreground bg-primary-foreground/30 border-3 border-primary-foreground shadow-lg transform hover:scale-105 transition-all"
                   aria-label="Customize Jubee"
@@ -120,18 +129,59 @@ export default function App() {
               </div>
             </header>
 
-            <div className="jubee-container" aria-hidden="true">
-              <Canvas camera={{ position: [0, 0, 5] }}>
-                <ambientLight intensity={0.5} />
-                <spotLight position={[10, 10, 10]} />
-                <Suspense fallback={null}>
-                  <JubeeMascot
-                    position={[jubeePosition.x, jubeePosition.y, jubeePosition.z]}
-                    animation={jubeeAnimation}
-                  />
-                </Suspense>
-              </Canvas>
-            </div>
+            {isVisible && (
+              <div className="jubee-container" aria-hidden="true" style={{ zIndex: 30 }}>
+                <ErrorBoundary
+                  fallback={
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center p-4 bg-background/80 rounded-lg">
+                        <p className="text-primary font-bold mb-2">Jubee needs a quick rest! 🐝</p>
+                        <button
+                          onClick={() => {
+                            setCanvasError(false);
+                            window.location.reload();
+                          }}
+                          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:scale-105 transition-transform"
+                        >
+                          Refresh
+                        </button>
+                      </div>
+                    </div>
+                  }
+                  onError={(error) => {
+                    console.error('[Jubee] Canvas error:', error);
+                    setCanvasError(true);
+                  }}
+                >
+                  <Canvas 
+                    camera={{ position: [0, 0, 5] }}
+                    onCreated={({ gl }) => {
+                      console.log('[Jubee] Canvas created successfully');
+                      // Handle WebGL context loss
+                      gl.domElement.addEventListener('webglcontextlost', (event) => {
+                        event.preventDefault();
+                        console.error('[Jubee] WebGL context lost');
+                        setCanvasError(true);
+                      });
+                      
+                      gl.domElement.addEventListener('webglcontextrestored', () => {
+                        console.log('[Jubee] WebGL context restored');
+                        setCanvasError(false);
+                      });
+                    }}
+                  >
+                    <ambientLight intensity={0.5} />
+                    <spotLight position={[10, 10, 10]} />
+                    <Suspense fallback={null}>
+                      <JubeeMascot
+                        position={[jubeePosition.x, jubeePosition.y, jubeePosition.z]}
+                        animation={jubeeAnimation}
+                      />
+                    </Suspense>
+                  </Canvas>
+                </ErrorBoundary>
+              </div>
+            )}
 
             <main className="main-content" role="main" style={{ paddingTop: '80px' }}>
               <Suspense fallback={<LoadingScreen message="Loading activity" />}>

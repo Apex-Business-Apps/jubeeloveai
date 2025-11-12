@@ -67,9 +67,11 @@ export function JubeeMascot({ position = [3, -2, 0], animation = 'idle' }: Jubee
   // Memoize current colors
   const currentColors = useMemo(() => COLORS[gender], [gender])
   
-  // Cleanup on unmount
+  // Mount/unmount logging
   useEffect(() => {
+    console.log('[Jubee] JubeeMascot mounted')
     return () => {
+      console.log('[Jubee] JubeeMascot unmounting')
       cleanup()
     }
   }, [cleanup])

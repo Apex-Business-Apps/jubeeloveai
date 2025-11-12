@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
+import { persist } from 'zustand/middleware'
 
 // Cleanup timers map
 const timers = new Map<string, NodeJS.Timeout>()
@@ -13,6 +14,7 @@ interface JubeeState {
   isTransitioning: boolean
   isProcessing: boolean
   lastError: string | null
+  isVisible: boolean
   setGender: (gender: 'male' | 'female') => void
   updatePosition: (position: any) => void
   triggerAnimation: (animation: string) => void
@@ -20,6 +22,14 @@ interface JubeeState {
   speak: (text: string) => void
   converse: (message: string, context?: ConversationContext) => Promise<string>
   cleanup: () => void
+  toggleVisibility: () => void
+}
+
+// Position bounds to prevent off-screen positioning
+const POSITION_BOUNDS = {
+  x: { min: -6, max: 6 },
+  y: { min: -4, max: 4 },
+  z: { min: -2, max: 2 }
 }
 
 interface ConversationContext {
@@ -29,74 +39,104 @@ interface ConversationContext {
 }
 
 export const useJubeeStore = create<JubeeState>()(
-  immer((set, get) => ({
-    gender: 'female',
-    position: { x: 3, y: -2, z: 0 },
-    currentAnimation: 'idle',
-    speechText: '',
-    isTransitioning: false,
-    isProcessing: false,
-    lastError: null,
+  persist(
+    immer((set, get) => ({
+      gender: 'female',
+      position: { x: 3, y: -2, z: 0 },
+      currentAnimation: 'idle',
+      speechText: '',
+      isTransitioning: false,
+      isProcessing: false,
+      lastError: null,
+      isVisible: true,
 
-    setGender: (gender) => set((state) => { state.gender = gender }),
+      setGender: (gender) => {
+        console.log('[Jubee] Gender changed:', gender)
+        set((state) => { state.gender = gender })
+      },
 
-    updatePosition: (position) => {
-      // Throttle position updates to avoid excessive store updates
-      const now = Date.now()
-      const lastUpdate = (timers.get('positionUpdate') as any)?.time || 0
-      if (now - lastUpdate < 100) return // Update max 10 times per second
-      
-      timers.set('positionUpdate', { time: now } as any)
-      
-      set((state) => {
-        if (position && 
-            (Math.abs(state.position.x - position.x) > 0.01 ||
-             Math.abs(state.position.y - position.y) > 0.01 ||
-             Math.abs(state.position.z - position.z) > 0.01)) {
-          state.position = { x: position.x, y: position.y, z: position.z }
-        }
-      })
-    },
-
-    triggerAnimation: (animation) => {
-      // Clear existing animation timer
-      const existingTimer = timers.get('animation')
-      if (existingTimer) {
-        clearTimeout(existingTimer)
-      }
-      
-      set((state) => { state.currentAnimation = animation })
-      
-      const timer = setTimeout(() => {
-        set((state) => { state.currentAnimation = 'idle' })
-        timers.delete('animation')
-      }, 2000)
-      
-      timers.set('animation', timer)
-    },
-
-    triggerPageTransition: () => {
-      // Clear existing transition timer
-      const existingTimer = timers.get('transition')
-      if (existingTimer) {
-        clearTimeout(existingTimer)
-      }
-      
-      set((state) => {
-        state.isTransitioning = true
-        state.currentAnimation = 'pageTransition'
-      })
-      
-      const timer = setTimeout(() => {
+      updatePosition: (position) => {
+        // Throttle position updates to avoid excessive store updates
+        const now = Date.now()
+        const lastUpdate = (timers.get('positionUpdate') as any)?.time || 0
+        if (now - lastUpdate < 100) return // Update max 10 times per second
+        
+        timers.set('positionUpdate', { time: now } as any)
+        
         set((state) => {
-          state.isTransitioning = false
-          state.currentAnimation = 'idle'
+          if (position) {
+            // Apply bounds checking
+            const boundedX = Math.max(POSITION_BOUNDS.x.min, Math.min(POSITION_BOUNDS.x.max, position.x))
+            const boundedY = Math.max(POSITION_BOUNDS.y.min, Math.min(POSITION_BOUNDS.y.max, position.y))
+            const boundedZ = Math.max(POSITION_BOUNDS.z.min, Math.min(POSITION_BOUNDS.z.max, position.z))
+            
+            // Log if position was out of bounds
+            if (boundedX !== position.x || boundedY !== position.y || boundedZ !== position.z) {
+              console.warn('[Jubee] Position out of bounds, clamped:', {
+                original: position,
+                clamped: { x: boundedX, y: boundedY, z: boundedZ }
+              })
+            }
+            
+            if (Math.abs(state.position.x - boundedX) > 0.01 ||
+                Math.abs(state.position.y - boundedY) > 0.01 ||
+                Math.abs(state.position.z - boundedZ) > 0.01) {
+              state.position = { x: boundedX, y: boundedY, z: boundedZ }
+            }
+          }
         })
-        timers.delete('transition')
-      }, 1200)
-      
-      timers.set('transition', timer)
-    },
+      },
+
+      toggleVisibility: () => {
+        set((state) => {
+          state.isVisible = !state.isVisible
+          console.log('[Jubee] Visibility toggled:', state.isVisible)
+        })
+      },
+
+      triggerAnimation: (animation) => {
+        console.log('[Jubee] Animation triggered:', animation)
+        // Clear existing animation timer
+        const existingTimer = timers.get('animation')
+        if (existingTimer) {
+          clearTimeout(existingTimer)
+        }
+        
+        set((state) => { state.currentAnimation = animation })
+        
+        const timer = setTimeout(() => {
+          set((state) => { state.currentAnimation = 'idle' })
+          timers.delete('animation')
+          console.log('[Jubee] Animation reset to idle')
+        }, 2000)
+        
+        timers.set('animation', timer)
+      },
+
+      triggerPageTransition: () => {
+        console.log('[Jubee] Page transition started')
+        // Clear existing transition timer
+        const existingTimer = timers.get('transition')
+        if (existingTimer) {
+          clearTimeout(existingTimer)
+        }
+        
+        set((state) => {
+          state.isTransitioning = true
+          state.currentAnimation = 'pageTransition'
+        })
+        
+        const timer = setTimeout(() => {
+          set((state) => {
+            state.isTransitioning = false
+            state.currentAnimation = 'idle'
+          })
+          timers.delete('transition')
+          console.log('[Jubee] Page transition complete')
+        }, 1200)
+        
+        timers.set('transition', timer)
+      },
 
     speak: async (text) => {
       // Stop any currently playing audio
@@ -296,23 +336,29 @@ export const useJubeeStore = create<JubeeState>()(
       }
     },
 
-    cleanup: () => {
-      // Clear all timers
-      timers.forEach((timer) => clearTimeout(timer))
-      timers.clear()
-      
-      // Stop audio
-      if (currentAudio) {
-        currentAudio.pause()
-        currentAudio = null
+      cleanup: () => {
+        console.log('[Jubee] Cleanup called')
+        // Clear all timers
+        timers.forEach((timer) => clearTimeout(timer))
+        timers.clear()
+        
+        // Stop audio
+        if (currentAudio) {
+          currentAudio.pause()
+          currentAudio = null
+        }
+        
+        // Stop browser speech
+        if ('speechSynthesis' in window) {
+          speechSynthesis.cancel()
+        }
       }
-      
-      // Stop browser speech
-      if ('speechSynthesis' in window) {
-        speechSynthesis.cancel()
-      }
+    })),
+    {
+      name: 'jubee-store',
+      partialize: (state) => ({ gender: state.gender, isVisible: state.isVisible })
     }
-  }))
+  )
 )
 
 // Browser speech fallback helper
