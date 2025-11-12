@@ -16,6 +16,11 @@ interface DragState {
   startRight: number
 }
 
+// Enhanced boundary constants for defensive position management
+const SAFE_MARGIN = 20 // Minimum distance from viewport edges
+const CONTAINER_WIDTH = 450
+const CONTAINER_HEIGHT = 500
+
 export function useJubeeDraggable(containerRef: React.RefObject<HTMLDivElement>) {
   const { containerPosition, setContainerPosition, setIsDragging } = useJubeeStore()
   const dragStateRef = useRef<DragState>({
@@ -54,6 +59,20 @@ export function useJubeeDraggable(containerRef: React.RefObject<HTMLDivElement>)
     console.log('[Jubee Drag] Started')
   }, [containerRef, setIsDragging])
 
+  const validateBoundaries = useCallback((bottom: number, right: number): { bottom: number; right: number } => {
+    const viewportHeight = window.innerHeight
+    const viewportWidth = window.innerWidth
+    
+    // Enhanced boundary calculation with safe margins
+    const maxBottom = viewportHeight - CONTAINER_HEIGHT - SAFE_MARGIN
+    const maxRight = viewportWidth - CONTAINER_WIDTH - SAFE_MARGIN
+    
+    return {
+      bottom: Math.max(SAFE_MARGIN, Math.min(maxBottom, bottom)),
+      right: Math.max(SAFE_MARGIN, Math.min(maxRight, right))
+    }
+  }, [])
+
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!dragStateRef.current.isDragging || !containerRef.current) return
     
@@ -62,23 +81,17 @@ export function useJubeeDraggable(containerRef: React.RefObject<HTMLDivElement>)
     const deltaX = e.clientX - dragStateRef.current.startX
     const deltaY = e.clientY - dragStateRef.current.startY
     
-    const viewportHeight = window.innerHeight
-    const viewportWidth = window.innerWidth
-    const rect = containerRef.current.getBoundingClientRect()
-    
     // Calculate new position (in bottom/right coordinates)
     let newBottom = dragStateRef.current.startBottom - deltaY
     let newRight = dragStateRef.current.startRight - deltaX
     
-    // Constrain to viewport bounds
-    const minDistance = 10
-    newBottom = Math.max(minDistance, Math.min(viewportHeight - rect.height - minDistance, newBottom))
-    newRight = Math.max(minDistance, Math.min(viewportWidth - rect.width - minDistance, newRight))
+    // Apply defensive boundary validation
+    const validated = validateBoundaries(newBottom, newRight)
     
     // Apply position immediately for smooth dragging
-    containerRef.current.style.bottom = `${newBottom}px`
-    containerRef.current.style.right = `${newRight}px`
-  }, [containerRef])
+    containerRef.current.style.bottom = `${validated.bottom}px`
+    containerRef.current.style.right = `${validated.right}px`
+  }, [containerRef, validateBoundaries])
 
   const handleMouseUp = useCallback(() => {
     if (!dragStateRef.current.isDragging || !containerRef.current) return
@@ -87,19 +100,22 @@ export function useJubeeDraggable(containerRef: React.RefObject<HTMLDivElement>)
     const viewportHeight = window.innerHeight
     const viewportWidth = window.innerWidth
     
-    const finalBottom = viewportHeight - rect.bottom
-    const finalRight = viewportWidth - rect.right
+    let finalBottom = viewportHeight - rect.bottom
+    let finalRight = viewportWidth - rect.right
+    
+    // Apply final boundary validation before persisting
+    const validated = validateBoundaries(finalBottom, finalRight)
     
     dragStateRef.current.isDragging = false
     setIsDragging(false)
     containerRef.current.style.cursor = 'grab'
     document.body.style.userSelect = ''
     
-    // Save final position to store
-    setContainerPosition({ bottom: finalBottom, right: finalRight })
+    // Save validated final position to store
+    setContainerPosition(validated)
     
-    console.log('[Jubee Drag] Ended at:', { bottom: finalBottom, right: finalRight })
-  }, [containerRef, setIsDragging, setContainerPosition])
+    console.log('[Jubee Drag] Ended at validated position:', validated)
+  }, [containerRef, setIsDragging, setContainerPosition, validateBoundaries])
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (!containerRef.current) return
@@ -133,20 +149,15 @@ export function useJubeeDraggable(containerRef: React.RefObject<HTMLDivElement>)
     const deltaX = touch.clientX - dragStateRef.current.startX
     const deltaY = touch.clientY - dragStateRef.current.startY
     
-    const viewportHeight = window.innerHeight
-    const viewportWidth = window.innerWidth
-    const rect = containerRef.current.getBoundingClientRect()
-    
     let newBottom = dragStateRef.current.startBottom - deltaY
     let newRight = dragStateRef.current.startRight - deltaX
     
-    const minDistance = 10
-    newBottom = Math.max(minDistance, Math.min(viewportHeight - rect.height - minDistance, newBottom))
-    newRight = Math.max(minDistance, Math.min(viewportWidth - rect.width - minDistance, newRight))
+    // Apply defensive boundary validation
+    const validated = validateBoundaries(newBottom, newRight)
     
-    containerRef.current.style.bottom = `${newBottom}px`
-    containerRef.current.style.right = `${newRight}px`
-  }, [containerRef])
+    containerRef.current.style.bottom = `${validated.bottom}px`
+    containerRef.current.style.right = `${validated.right}px`
+  }, [containerRef, validateBoundaries])
 
   const handleTouchEnd = useCallback(() => {
     if (!dragStateRef.current.isDragging || !containerRef.current) return
@@ -155,16 +166,19 @@ export function useJubeeDraggable(containerRef: React.RefObject<HTMLDivElement>)
     const viewportHeight = window.innerHeight
     const viewportWidth = window.innerWidth
     
-    const finalBottom = viewportHeight - rect.bottom
-    const finalRight = viewportWidth - rect.right
+    let finalBottom = viewportHeight - rect.bottom
+    let finalRight = viewportWidth - rect.right
+    
+    // Apply final boundary validation before persisting
+    const validated = validateBoundaries(finalBottom, finalRight)
     
     dragStateRef.current.isDragging = false
     setIsDragging(false)
     
-    setContainerPosition({ bottom: finalBottom, right: finalRight })
+    setContainerPosition(validated)
     
-    console.log('[Jubee Drag] Touch ended at:', { bottom: finalBottom, right: finalRight })
-  }, [containerRef, setIsDragging, setContainerPosition])
+    console.log('[Jubee Drag] Touch ended at validated position:', validated)
+  }, [containerRef, setIsDragging, setContainerPosition, validateBoundaries])
 
   // Attach event listeners
   useEffect(() => {

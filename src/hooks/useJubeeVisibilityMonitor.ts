@@ -17,6 +17,9 @@ interface VisibilityState {
 const VISIBILITY_CHECK_INTERVAL = 2000 // Check every 2 seconds
 const INVISIBILITY_THRESHOLD = 5000 // Consider lost after 5 seconds
 const RECOVERY_ATTEMPTS_MAX = 3
+const CONTAINER_WIDTH = 450
+const CONTAINER_HEIGHT = 500
+const SAFE_MARGIN = 20
 
 export function useJubeeVisibilityMonitor(containerRef: React.RefObject<HTMLDivElement>) {
   const { isVisible, containerPosition, setContainerPosition } = useJubeeStore()
@@ -105,19 +108,21 @@ export function useJubeeVisibilityMonitor(containerRef: React.RefObject<HTMLDivE
   const attemptRecovery = () => {
     recoveryAttemptsRef.current++
     
-    // Recovery strategy: Reset to guaranteed safe position
+    // Enhanced recovery strategy with defensive boundaries
     const viewportHeight = window.innerHeight
     const viewportWidth = window.innerWidth
-    const jubeeHeight = 500
-    const jubeeWidth = 450
     
-    // Calculate a safe position that's definitely visible
+    // Calculate maximum safe boundaries
+    const maxBottom = viewportHeight - CONTAINER_HEIGHT - SAFE_MARGIN
+    const maxRight = viewportWidth - CONTAINER_WIDTH - SAFE_MARGIN
+    
+    // Calculate a safe position that's definitely visible with proper bounds
     const safePosition = {
-      bottom: Math.min(150, viewportHeight - jubeeHeight - 100),
-      right: Math.min(50, viewportWidth - jubeeWidth - 50)
+      bottom: Math.max(SAFE_MARGIN, Math.min(120, maxBottom)),
+      right: Math.max(SAFE_MARGIN, Math.min(80, maxRight))
     }
     
-    console.log('[Jubee Visibility] Attempting recovery - resetting position to:', safePosition)
+    console.log('[Jubee Visibility] Attempting recovery - resetting to safe position:', safePosition)
     setContainerPosition(safePosition)
     
     // Force re-render by toggling visibility flag
@@ -133,16 +138,18 @@ export function useJubeeVisibilityMonitor(containerRef: React.RefObject<HTMLDivE
     console.log('[Jubee Visibility] Manual reset triggered')
     recoveryAttemptsRef.current = 0
     
-    // Reset to guaranteed safe position with proper bounds
+    // Enhanced reset with defensive boundaries
     const viewportHeight = window.innerHeight
     const viewportWidth = window.innerWidth
-    const jubeeHeight = 500
-    const jubeeWidth = 450
     
-    // Ensure position is safe and visible
+    // Calculate maximum safe boundaries
+    const maxBottom = viewportHeight - CONTAINER_HEIGHT - SAFE_MARGIN
+    const maxRight = viewportWidth - CONTAINER_WIDTH - SAFE_MARGIN
+    
+    // Ensure position is safe and visible with proper boundary enforcement
     const safePosition = {
-      bottom: Math.max(150, Math.min(viewportHeight - jubeeHeight - 100, viewportHeight / 2)),
-      right: Math.max(50, Math.min(viewportWidth - jubeeWidth - 50, 50))
+      bottom: Math.max(SAFE_MARGIN, Math.min(120, maxBottom)),
+      right: Math.max(SAFE_MARGIN, Math.min(80, maxRight))
     }
     
     console.log('[Jubee Visibility] Resetting to safe position:', safePosition)
