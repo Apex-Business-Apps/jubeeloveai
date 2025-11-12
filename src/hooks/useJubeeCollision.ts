@@ -30,7 +30,7 @@ const COLLISION_SELECTORS = [
 const COLLISION_PADDING = 20 // pixels
 const CONTAINER_WIDTH = 450
 const CONTAINER_HEIGHT = 500
-const SAFE_MARGIN = 20
+const SAFE_MARGIN = 80 // Increased to prevent edge clipping
 
 export function useJubeeCollision(containerRef: React.RefObject<HTMLDivElement>) {
   const { containerPosition, setContainerPosition } = useJubeeStore()
@@ -61,14 +61,16 @@ export function useJubeeCollision(containerRef: React.RefObject<HTMLDivElement>)
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
     
-    // Enhanced boundary calculation with consistent safe margins
-    const maxBottom = viewportHeight - CONTAINER_HEIGHT - SAFE_MARGIN
-    const maxRight = viewportWidth - CONTAINER_WIDTH - SAFE_MARGIN
+    // Enhanced boundary calculation with generous minimums to prevent clipping
+    const minBottom = 100 // Ensure above bottom navigation
+    const minRight = 80 // Ensure left edge visibility
+    const maxBottom = Math.max(minBottom, viewportHeight - CONTAINER_HEIGHT - SAFE_MARGIN)
+    const maxRight = Math.max(minRight, viewportWidth - CONTAINER_WIDTH - SAFE_MARGIN)
     
     // Validate with defensive boundaries
     const validated = {
-      bottom: Math.max(SAFE_MARGIN, Math.min(maxBottom, pos.bottom)),
-      right: Math.max(SAFE_MARGIN, Math.min(maxRight, pos.right))
+      bottom: Math.max(minBottom, Math.min(maxBottom, pos.bottom)),
+      right: Math.max(minRight, Math.min(maxRight, pos.right))
     }
     
     // Additional safety check: ensure values are finite and not NaN
