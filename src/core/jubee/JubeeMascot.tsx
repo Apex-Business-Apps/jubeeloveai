@@ -67,7 +67,7 @@ const getJubeeColors = (gender: 'male' | 'female') => ({
 const tempVector = new THREE.Vector3()
 const targetScale = new THREE.Vector3()
 
-export function JubeeMascot({ position = [3, -2, 0], animation = 'idle' }: JubeeProps) {
+export function JubeeMascot({ position = [2.5, -1.5, 0], animation = 'idle' }: JubeeProps) {
   const group = useRef<Group>(null)
   const bodyRef = useRef<Mesh>(null)
   const headRef = useRef<Mesh>(null)
@@ -123,8 +123,8 @@ export function JubeeMascot({ position = [3, -2, 0], animation = 'idle' }: Jubee
     // Page transition animation - Jubee flies across screen
     if (animation === 'pageTransition') {
       const transitionProgress = (time % 1.2) / 1.2 // 1.2 second cycle
-      const flyX = Math.sin(transitionProgress * Math.PI * 2) * 5 // Fly across screen
-      const flyY = position[1] + Math.sin(transitionProgress * Math.PI) * 2 // Arc motion
+      const flyX = Math.sin(transitionProgress * Math.PI * 2) * 4 // Fly across screen (reduced range)
+      const flyY = position[1] + Math.sin(transitionProgress * Math.PI) * 1.5 // Arc motion (reduced)
       group.current.position.x = flyX
       group.current.position.y = flyY
       group.current.position.z = position[2]
@@ -132,11 +132,14 @@ export function JubeeMascot({ position = [3, -2, 0], animation = 'idle' }: Jubee
       // Spin while flying
       group.current.rotation.y = transitionProgress * Math.PI * 4
     } else {
-      // Normal hovering motion
+      // Normal hovering motion - constrained to visible area
       const baseY = position[1]
       const hoverSpeed = animation === 'excited' ? 3 : 2
-      const hoverAmount = animation === 'excited' ? 0.2 : 0.1
-      group.current.position.y = baseY + Math.sin(time * hoverSpeed) * hoverAmount
+      const hoverAmount = animation === 'excited' ? 0.15 : 0.08 // Reduced movement
+      const newY = baseY + Math.sin(time * hoverSpeed) * hoverAmount
+      
+      // Clamp Y position to prevent going off-screen (keep antenna visible)
+      group.current.position.y = Math.max(-3, Math.min(1, newY))
       group.current.position.x = position[0]
       group.current.position.z = position[2]
     }

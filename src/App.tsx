@@ -146,7 +146,7 @@ export default function App() {
             </header>
 
             {isVisible && (
-              <div className="jubee-container" aria-hidden="true" style={{ zIndex: 30 }}>
+              <div className="jubee-container" aria-hidden="true">
                 <ErrorBoundary
                   fallback={
                     <div className="flex items-center justify-center h-full">
@@ -170,12 +170,14 @@ export default function App() {
                   }}
                 >
                   <Canvas 
-                    camera={{ position: [0, 0, 5], fov: 50 }}
+                    camera={{ position: [0, 0, 6], fov: 45 }}
                     shadows
+                    style={{ background: 'transparent' }}
                     gl={{ 
                       antialias: true,
                       alpha: true,
-                      powerPreference: "high-performance"
+                      powerPreference: "high-performance",
+                      preserveDrawingBuffer: true
                     }}
                     onCreated={({ gl }) => {
                       console.log('[Jubee] Canvas created successfully');
