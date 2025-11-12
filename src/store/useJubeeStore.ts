@@ -46,8 +46,8 @@ export const useJubeeStore = create<JubeeState>()(
   persist(
     immer((set, get) => ({
       gender: 'female',
-      position: { x: 3, y: -2, z: 0 },
-      containerPosition: { bottom: 60, right: 20 },
+      position: { x: 2.5, y: -1.5, z: 0 },
+      containerPosition: { bottom: 100, right: 40 }, // More conservative default
       isDragging: false,
       currentAnimation: 'idle',
       speechText: '',

@@ -131,11 +131,22 @@ export function useJubeeCollision(containerRef: React.RefObject<HTMLDivElement>)
     }
   }, [containerRef, getElementRect, checkCollision, findSafePosition, setContainerPosition])
 
-  // Run collision detection on mount and when layout changes
+  // Run collision detection frequently during initial page load
   useEffect(() => {
-    const timeoutId = setTimeout(detectAndResolveCollisions, 100)
+    // Run immediately
+    const timeoutId1 = setTimeout(detectAndResolveCollisions, 100)
+    
+    // Run multiple times during initial load to catch late-rendering elements
+    const timeoutId2 = setTimeout(detectAndResolveCollisions, 500)
+    const timeoutId3 = setTimeout(detectAndResolveCollisions, 1000)
+    const timeoutId4 = setTimeout(detectAndResolveCollisions, 2000)
 
-    return () => clearTimeout(timeoutId)
+    return () => {
+      clearTimeout(timeoutId1)
+      clearTimeout(timeoutId2)
+      clearTimeout(timeoutId3)
+      clearTimeout(timeoutId4)
+    }
   }, [detectAndResolveCollisions])
 
   // Re-check on window resize

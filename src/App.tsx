@@ -21,6 +21,7 @@ import { VoiceCommandButton } from './components/VoiceCommandButton';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { useJubeeCollision } from './hooks/useJubeeCollision';
 import { useJubeeDraggable } from './hooks/useJubeeDraggable';
+import { useJubeeVisibilityMonitor } from './hooks/useJubeeVisibilityMonitor';
 
 const WritingCanvas = lazy(() => import('./modules/writing/WritingCanvas'));
 const ShapeSorter = lazy(() => import('./modules/shapes/ShapeSorter'));
@@ -69,9 +70,10 @@ export default function App() {
   const { position: jubeePosition, currentAnimation: jubeeAnimation, isVisible, toggleVisibility, containerPosition, isDragging } = useJubeeStore();
   const { children, activeChildId } = useParentalStore();
 
-  // Enable collision detection and dragging
+  // Enable collision detection, dragging, and visibility monitoring
   useJubeeCollision(jubeeContainerRef);
   useJubeeDraggable(jubeeContainerRef);
+  const { needsRecovery, forceReset } = useJubeeVisibilityMonitor(jubeeContainerRef);
 
   useEffect(() => {
     const updateThemeBasedOnTime = () => {
@@ -195,20 +197,44 @@ export default function App() {
                       powerPreference: "high-performance",
                       preserveDrawingBuffer: true
                     }}
-                    onCreated={({ gl }) => {
+                    onCreated={({ gl, scene, camera }) => {
                       console.log('[Jubee] Canvas created successfully');
                       gl.setClearColor('#000000', 0)
-                      // Handle WebGL context loss
+                      
+                      // Enhanced WebGL context loss recovery
                       gl.domElement.addEventListener('webglcontextlost', (event) => {
                         event.preventDefault();
-                        console.error('[Jubee] WebGL context lost');
+                        console.error('[Jubee] WebGL context lost! Preventing default and preparing for restoration...');
+                        
+                        // Store current state before context loss
+                        const currentState = {
+                          position: jubeePosition,
+                          animation: jubeeAnimation
+                        }
+                        console.log('[Jubee] Saved state before context loss:', currentState);
                         setCanvasError(true);
                       });
                       
                       gl.domElement.addEventListener('webglcontextrestored', () => {
-                        console.log('[Jubee] WebGL context restored');
+                        console.log('[Jubee] WebGL context restored! Recompiling scene...');
+                        gl.compile(scene, camera);
                         setCanvasError(false);
+                        console.log('[Jubee] Scene recompiled successfully after context restore');
                       });
+                      
+                      // Periodic health check
+                      const healthCheckInterval = setInterval(() => {
+                        const context = gl.getContext();
+                        if (context && context.isContextLost()) {
+                          console.error('[Jubee] Context lost detected during health check!');
+                          setCanvasError(true);
+                        }
+                      }, 5000);
+                      
+                      // Cleanup on unmount
+                      return () => {
+                        clearInterval(healthCheckInterval);
+                      };
                     }}
                   >
                     <ambientLight intensity={1.2} />
@@ -277,6 +303,32 @@ export default function App() {
             <VoiceCommandButton />
             <OfflineIndicator />
           </div>
+          
+          {/* Recovery button when Jubee disappears */}
+          {needsRecovery && (
+            <button
+              onClick={forceReset}
+              className="fixed top-4 right-4 z-[100] bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg hover:opacity-90 transition-opacity flex items-center gap-2 animate-fade-in"
+              aria-label="Reset Jubee position"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="20" 
+                height="20" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+              </svg>
+              Reset Jubee
+            </button>
+          )}
+          
           <Toaster />
         </BrowserRouter>
       </QueryClientProvider>
