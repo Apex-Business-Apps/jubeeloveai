@@ -30,7 +30,7 @@ const COLLISION_SELECTORS = [
 const COLLISION_PADDING = 20 // pixels
 const CONTAINER_WIDTH = 450
 const CONTAINER_HEIGHT = 500
-const SAFE_MARGIN = 80 // Increased to prevent edge clipping
+const SAFE_MARGIN = 50 // Margin to prevent edge clipping
 
 export function useJubeeCollision(containerRef: React.RefObject<HTMLDivElement>) {
   const { containerPosition, setContainerPosition } = useJubeeStore()
@@ -62,8 +62,8 @@ export function useJubeeCollision(containerRef: React.RefObject<HTMLDivElement>)
     const viewportHeight = window.innerHeight
     
     // Enhanced boundary calculation with generous minimums to prevent clipping
-    const minBottom = 100 // Ensure above bottom navigation
-    const minRight = 80 // Ensure left edge visibility
+    const minBottom = 180 // Ensure above bottom navigation
+    const minRight = 100 // Ensure left edge visibility
     const maxBottom = Math.max(minBottom, viewportHeight - CONTAINER_HEIGHT - SAFE_MARGIN)
     const maxRight = Math.max(minRight, viewportWidth - CONTAINER_WIDTH - SAFE_MARGIN)
     
@@ -93,7 +93,7 @@ export function useJubeeCollision(containerRef: React.RefObject<HTMLDivElement>)
     
     // Try positions in order of preference with dynamic zones
     const positions = [
-      { bottom: 120, right: 80 }, // Default safe position
+      { bottom: 200, right: 100 }, // Default safe position
       { bottom: cornerMargin, right: cornerMargin }, // Bottom-right corner
       { bottom: cornerMargin, right: viewportWidth - CONTAINER_WIDTH - cornerMargin }, // Bottom-left corner
       { bottom: viewportHeight - CONTAINER_HEIGHT - cornerMargin, right: cornerMargin }, // Top-right corner
@@ -125,7 +125,7 @@ export function useJubeeCollision(containerRef: React.RefObject<HTMLDivElement>)
     }
 
     // If no collision-free position found, return validated default
-    return validatePosition({ bottom: 120, right: 80 })
+    return validatePosition({ bottom: 200, right: 100 })
   }, [checkCollision, validatePosition])
 
   const detectAndResolveCollisions = useCallback(() => {

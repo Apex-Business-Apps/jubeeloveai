@@ -19,7 +19,7 @@ const INVISIBILITY_THRESHOLD = 5000 // Consider lost after 5 seconds
 const RECOVERY_ATTEMPTS_MAX = 3
 const CONTAINER_WIDTH = 450
 const CONTAINER_HEIGHT = 500
-const SAFE_MARGIN = 80 // Increased to match collision detection
+const SAFE_MARGIN = 50 // Margin to prevent edge clipping
 
 export function useJubeeVisibilityMonitor(containerRef: React.RefObject<HTMLDivElement>) {
   const { isVisible, containerPosition, setContainerPosition } = useJubeeStore()
@@ -113,8 +113,8 @@ export function useJubeeVisibilityMonitor(containerRef: React.RefObject<HTMLDivE
     const viewportWidth = window.innerWidth
     
     // Calculate minimum safe positions to ensure full visibility
-    const minBottom = 100
-    const minRight = 80
+    const minBottom = 180
+    const minRight = 100
     
     // Calculate maximum safe boundaries
     const maxBottom = Math.max(minBottom, viewportHeight - CONTAINER_HEIGHT - SAFE_MARGIN)
@@ -122,8 +122,8 @@ export function useJubeeVisibilityMonitor(containerRef: React.RefObject<HTMLDivE
     
     // Calculate a safe position that's definitely visible with proper bounds
     const safePosition = {
-      bottom: Math.max(minBottom, Math.min(120, maxBottom)),
-      right: Math.max(minRight, Math.min(80, maxRight))
+      bottom: Math.max(minBottom, Math.min(200, maxBottom)),
+      right: Math.max(minRight, Math.min(100, maxRight))
     }
     
     console.log('[Jubee Visibility] Attempting recovery - resetting to safe position:', safePosition)
@@ -147,8 +147,8 @@ export function useJubeeVisibilityMonitor(containerRef: React.RefObject<HTMLDivE
     const viewportWidth = window.innerWidth
     
     // Calculate minimum safe positions
-    const minBottom = 100
-    const minRight = 80
+    const minBottom = 180
+    const minRight = 100
     
     // Calculate maximum safe boundaries
     const maxBottom = Math.max(minBottom, viewportHeight - CONTAINER_HEIGHT - SAFE_MARGIN)
@@ -156,8 +156,8 @@ export function useJubeeVisibilityMonitor(containerRef: React.RefObject<HTMLDivE
     
     // Ensure position is safe and visible with proper boundary enforcement
     const safePosition = {
-      bottom: Math.max(minBottom, Math.min(120, maxBottom)),
-      right: Math.max(minRight, Math.min(80, maxRight))
+      bottom: Math.max(minBottom, Math.min(200, maxBottom)),
+      right: Math.max(minRight, Math.min(100, maxRight))
     }
     
     console.log('[Jubee Visibility] Resetting to safe position:', safePosition)

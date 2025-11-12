@@ -17,7 +17,7 @@ interface DragState {
 }
 
 // Enhanced boundary constants for defensive position management
-const SAFE_MARGIN = 80 // Increased to prevent edge clipping
+const SAFE_MARGIN = 50 // Margin to prevent edge clipping during drag
 const CONTAINER_WIDTH = 450
 const CONTAINER_HEIGHT = 500
 
@@ -64,14 +64,14 @@ export function useJubeeDraggable(containerRef: React.RefObject<HTMLDivElement>)
     const viewportWidth = window.innerWidth
     
     // Enhanced boundary calculation with generous minimums
-    const minBottom = 100 // Ensure above bottom navigation
-    const minRight = 80 // Ensure left edge visibility
+    const minBottom = 180 // Ensure above bottom navigation
+    const minRight = 100 // Ensure left edge visibility
     const maxBottom = Math.max(minBottom, viewportHeight - CONTAINER_HEIGHT - SAFE_MARGIN)
     const maxRight = Math.max(minRight, viewportWidth - CONTAINER_WIDTH - SAFE_MARGIN)
     
     // Additional NaN/Infinity guards
-    const safeBottom = Number.isFinite(bottom) ? bottom : 120
-    const safeRight = Number.isFinite(right) ? right : 80
+    const safeBottom = Number.isFinite(bottom) ? bottom : 200
+    const safeRight = Number.isFinite(right) ? right : 100
     
     return {
       bottom: Math.max(minBottom, Math.min(maxBottom, safeBottom)),
