@@ -313,15 +313,16 @@ class SyncService {
 
           const { error } = await supabase
             .from('children_profiles')
-            .upsert({
+            .upsert([{
+              id: item.id,
               parent_user_id: user.id,
               name: item.name,
               age: item.age,
               gender: item.gender,
               avatar_url: item.avatarUrl,
-              settings: item.settings,
+              settings: item.settings as any,
               updated_at: item.updatedAt,
-            })
+            }])
 
           if (error) throw error
 

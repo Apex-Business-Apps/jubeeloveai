@@ -28,10 +28,13 @@ i18n
     }
   })
 
-// Extend Window interface for i18next (if not already extended)
+// Extend Window interface for i18next
 declare global {
   interface Window {
-    i18next?: typeof i18n
+    i18next?: {
+      language: string
+      on: (event: string, callback: (language: string) => void) => void
+    }
     i18nextLanguage?: string
   }
 }

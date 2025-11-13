@@ -223,7 +223,7 @@ class IndexedDBService {
     } catch (error) {
       console.error(`IndexedDB get error in ${storeName}:`, error)
       // Fallback to localStorage
-      return this.fallbackToLocalStorage('get', storeName, key)
+      return this.fallbackToLocalStorage('get', storeName, key) as DBSchema[K]['value'] | undefined
     }
   }
 
@@ -258,7 +258,7 @@ class IndexedDBService {
     } catch (error) {
       console.error(`IndexedDB getAll error in ${storeName}:`, error)
       // Fallback to localStorage
-      return this.fallbackToLocalStorage('getAll', storeName)
+      return this.fallbackToLocalStorage('getAll', storeName) as DBSchema[K]['value'][]
     }
   }
 

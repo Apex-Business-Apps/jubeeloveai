@@ -8,10 +8,6 @@ import { jubeeStateBackupService } from '@/lib/jubeeStateBackup'
 // Extend Window interface for i18next properties
 declare global {
   interface Window {
-    i18next?: {
-      language: string
-      on: (event: string, callback: (language: string) => void) => void
-    }
     i18nextLanguage?: string
   }
 }
@@ -131,7 +127,7 @@ export const useJubeeStore = create<JubeeState>()(
         console.log('[Jubee] Animation triggered:', animation)
         // Clear existing animation timer
         const existingTimer = timers.get('animation')
-        if (existingTimer) {
+        if (existingTimer && typeof existingTimer !== 'object') {
           clearTimeout(existingTimer)
         }
         
@@ -150,7 +146,7 @@ export const useJubeeStore = create<JubeeState>()(
         console.log('[Jubee] Page transition started')
         // Clear existing transition timer
         const existingTimer = timers.get('transition')
-        if (existingTimer) {
+        if (existingTimer && typeof existingTimer !== 'object') {
           clearTimeout(existingTimer)
         }
         
@@ -180,7 +176,7 @@ export const useJubeeStore = create<JubeeState>()(
       
       // Clear existing speech timer
       const existingTimer = timers.get('speech')
-      if (existingTimer) {
+      if (existingTimer && typeof existingTimer !== 'object') {
         clearTimeout(existingTimer)
       }
       
@@ -412,8 +408,8 @@ export const useJubeeStore = create<JubeeState>()(
           // Fallback to safe defaults
           if (state) {
             const safeDefaults = getSafeDefaultPosition()
-            state.containerPosition = safeDefaults.container
-            state.position = safeDefaults.canvas
+            state.containerPosition = safeDefaults
+            state.position = { x: 0, y: 0, z: 0 }
             state.isVisible = true
             state.currentAnimation = 'idle'
           }

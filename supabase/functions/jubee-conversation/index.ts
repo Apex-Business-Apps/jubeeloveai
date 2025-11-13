@@ -59,6 +59,7 @@ serve(async (req) => {
         messages,
         max_completion_tokens: 80,
         stream: true,
+        service_tier: 'priority',
       }),
     });
 
