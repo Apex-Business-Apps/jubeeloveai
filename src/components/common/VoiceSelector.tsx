@@ -156,7 +156,7 @@ export function VoiceSelector({ onClose }: Props) {
               <p 
                 className="text-lg font-semibold"
                 style={{
-                  color: 'hsl(var(--game-accent))'
+                  color: 'hsl(var(--primary))'
                 }}
               >
                 {option.description}
