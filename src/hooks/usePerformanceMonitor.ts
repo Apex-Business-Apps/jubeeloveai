@@ -148,7 +148,7 @@ class PerformanceMonitor {
 
 // Global performance monitor instance
 export const performanceMonitor = new PerformanceMonitor({
-  logToConsole: process.env.NODE_ENV === 'development',
+  logToConsole: import.meta.env.MODE === 'development',
   warningThreshold: 16,
 });
 

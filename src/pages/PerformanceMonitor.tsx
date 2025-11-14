@@ -38,7 +38,7 @@ export default function PerformanceMonitor() {
     alert('Performance report generated! Check the console.');
   };
 
-  if (process.env.NODE_ENV !== 'development') {
+  if (import.meta.env.MODE !== 'development') {
     return (
       <div className="container mx-auto p-8">
         <Card>
