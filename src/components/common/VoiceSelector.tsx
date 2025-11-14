@@ -101,7 +101,7 @@ export function VoiceSelector({ onClose }: Props) {
           🎤 Choose Jubee's Voice! 🎤
         </h2>
 
-        <p className="text-xl text-center mb-6 text-foreground font-semibold">
+        <p className="text-xl text-center mb-6 font-semibold" style={{ color: 'hsl(var(--accent))' }}>
           Pick a voice that you like best!
         </p>
 
@@ -147,9 +147,7 @@ export function VoiceSelector({ onClose }: Props) {
               <h3 
                 className="text-2xl font-bold mb-1"
                 style={{
-                  color: selectedVoice === option.id 
-                    ? 'hsl(var(--primary-foreground))' 
-                    : 'hsl(var(--foreground))'
+                  color: 'hsl(var(--game-accent))'
                 }}
               >
                 {option.name}
@@ -158,9 +156,7 @@ export function VoiceSelector({ onClose }: Props) {
               <p 
                 className="text-lg font-semibold"
                 style={{
-                  color: selectedVoice === option.id 
-                    ? 'hsl(var(--primary-foreground))' 
-                    : 'hsl(var(--card-foreground))'
+                  color: 'hsl(var(--game-accent))'
                 }}
               >
                 {option.description}
