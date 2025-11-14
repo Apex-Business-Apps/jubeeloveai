@@ -101,7 +101,7 @@ export function VoiceSelector({ onClose }: Props) {
           🎤 Choose Jubee's Voice! 🎤
         </h2>
 
-        <p className="text-xl text-center mb-6 text-game-neutral">
+        <p className="text-xl text-center mb-6 text-foreground font-semibold">
           Pick a voice that you like best!
         </p>
 
@@ -114,7 +114,7 @@ export function VoiceSelector({ onClose }: Props) {
               style={{
                 background: selectedVoice === option.id
                   ? `linear-gradient(135deg, var(--gradient-warm))`
-                  : 'hsl(var(--muted))',
+                  : 'hsl(var(--card))',
                 border: selectedVoice === option.id 
                   ? '3px solid hsl(var(--game-accent))' 
                   : '3px solid hsl(var(--border))',
@@ -156,11 +156,11 @@ export function VoiceSelector({ onClose }: Props) {
               </h3>
               
               <p 
-                className="text-lg opacity-90"
+                className="text-lg font-semibold"
                 style={{
                   color: selectedVoice === option.id 
                     ? 'hsl(var(--primary-foreground))' 
-                    : 'hsl(var(--muted-foreground))'
+                    : 'hsl(var(--card-foreground))'
                 }}
               >
                 {option.description}
