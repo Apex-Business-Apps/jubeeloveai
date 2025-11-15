@@ -67,7 +67,7 @@ export const useJubeeStore = create<JubeeState>()(
       gender: 'female',
       voice: 'shimmer',
       position: { x: 0, y: 0, z: 0 },
-      containerPosition: { bottom: 200, right: 100 }, // Safe default position
+      containerPosition: { bottom: 250, right: 100 }, // Safe default position above nav bar
       isDragging: false,
       currentAnimation: 'idle',
       speechText: '',

@@ -27,7 +27,7 @@ export interface ViewportBounds {
 const SAFE_MARGINS = {
   top: 20,
   right: 20,
-  bottom: 20,
+  bottom: 100, // Account for 80px navigation bar + extra spacing
   left: 20,
 }
 
@@ -103,10 +103,10 @@ export function validateContainerPosition(pos: ContainerPosition): ContainerPosi
 export function getSafeDefaultPosition(): ContainerPosition {
   const viewport = getViewportBounds()
   
-  // Place in bottom-right corner with safe margins
+  // Place in bottom-right corner with safe margins, accounting for nav bar
   return {
     right: Math.max(100, SAFE_MARGINS.right + 50),
-    bottom: Math.max(200, SAFE_MARGINS.bottom + 100)
+    bottom: Math.max(250, SAFE_MARGINS.bottom + 150) // Ensures clearance above 80px nav bar
   }
 }
 
@@ -137,10 +137,10 @@ export function getPreferredPositions(viewport: ViewportBounds): ContainerPositi
   const centerY = viewport.height / 2
 
   return [
-    // Bottom-right (default)
-    { right: 100, bottom: 200 },
-    // Bottom-left
-    { right: viewport.width - containerDims.width - 100, bottom: 200 },
+    // Bottom-right (default) - above nav bar
+    { right: 100, bottom: 250 },
+    // Bottom-left - above nav bar
+    { right: viewport.width - containerDims.width - 100, bottom: 250 },
     // Top-right
     { right: 100, bottom: viewport.height - containerDims.height - 100 },
     // Top-left
