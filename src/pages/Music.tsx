@@ -4,10 +4,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { musicLibrary, Song } from '@/data/musicLibrary';
-import { Play, Pause, SkipForward, SkipBack, Volume2, Music as MusicIcon } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, Music as MusicIcon, Mic } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
 
 export default function MusicPage() {
   const { t } = useTranslation();
@@ -18,6 +19,7 @@ export default function MusicPage() {
   const [volume, setVolume] = useState(0.7);
   const [selectedGenre, setSelectedGenre] = useState<string>('all');
   const [currentLyricIndex, setCurrentLyricIndex] = useState(0);
+  const [karaokeMode, setKaraokeMode] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const genres = ['all', 'educational', 'lullaby', 'playful', 'classical'];
@@ -206,23 +208,43 @@ export default function MusicPage() {
                 {/* Lyrics Panel */}
                 {currentSong.lyrics && currentSong.lyrics.length > 0 && (
                   <div className="md:w-64 flex-shrink-0">
-                    <h4 className="text-sm font-semibold mb-2 text-muted-foreground">🎤 Sing Along</h4>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold text-muted-foreground">🎤 Sing Along</h4>
+                      <div className="flex items-center gap-2">
+                        <Mic className={`w-4 h-4 ${karaokeMode ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <Switch
+                          checked={karaokeMode}
+                          onCheckedChange={setKaraokeMode}
+                          className="scale-75"
+                        />
+                      </div>
+                    </div>
                     <ScrollArea className="h-32 md:h-full rounded-lg border-2 border-primary/20 bg-primary/5 p-3">
                       <div className="space-y-2">
-                        {currentSong.lyrics.map((lyric, idx) => (
-                          <p
-                            key={idx}
-                            className={`text-sm transition-all duration-300 ${
-                              idx === currentLyricIndex
-                                ? 'text-primary font-bold text-lg scale-105'
-                                : idx < currentLyricIndex
-                                ? 'text-muted-foreground/50'
-                                : 'text-foreground/70'
-                            }`}
-                          >
-                            {lyric.text}
-                          </p>
-                        ))}
+                        {currentSong.lyrics.map((lyric, idx) => {
+                          const shouldShow = karaokeMode 
+                            ? idx <= currentLyricIndex + 1 // Show current and next line in karaoke mode
+                            : true; // Show all lines in normal mode
+                          
+                          return (
+                            <p
+                              key={idx}
+                              className={`text-sm transition-all duration-300 ${
+                                !shouldShow
+                                  ? 'opacity-0 h-0'
+                                  : idx === currentLyricIndex
+                                  ? 'text-primary font-bold text-lg scale-105'
+                                  : idx < currentLyricIndex
+                                  ? 'text-muted-foreground/50'
+                                  : idx === currentLyricIndex + 1 && karaokeMode
+                                  ? 'text-muted-foreground/70 text-xs' // Next line preview in karaoke
+                                  : 'text-foreground/70'
+                              }`}
+                            >
+                              {shouldShow ? lyric.text : ''}
+                            </p>
+                          );
+                        })}
                       </div>
                     </ScrollArea>
                   </div>
