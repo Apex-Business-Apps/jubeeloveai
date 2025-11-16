@@ -6,22 +6,63 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// SECURITY: Input validation and sanitization
+const MAX_MESSAGE_LENGTH = 500;
+const MAX_CHILD_NAME_LENGTH = 50;
+const MAX_CONTEXT_LENGTH = 200;
+const ALLOWED_LANGUAGES = ['en', 'es', 'fr', 'zh', 'hi'];
+const ALLOWED_MOODS = ['happy', 'excited', 'frustrated', 'curious', 'tired'];
+
+function sanitizeInput(input: string, maxLength: number): string {
+  if (typeof input !== 'string') return '';
+  return input
+    .slice(0, maxLength)
+    .replace(/[<>{}]/g, '')
+    .trim();
+}
+
+function validateLanguage(lang: string): string {
+  return ALLOWED_LANGUAGES.includes(lang) ? lang : 'en';
+}
+
+function validateMood(mood: string): string | undefined {
+  return ALLOWED_MOODS.includes(mood) ? mood : undefined;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { message, language = 'en', childName, context = {} } = await req.json();
+    // SECURITY: Parse with error handling
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      throw new Error('Invalid JSON payload');
+    }
+
+    const { message, language = 'en', childName, context = {} } = body;
+    
+    // SECURITY: Validate and sanitize all inputs
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      throw new Error('Valid message is required');
+    }
+    
+    if (message.length > MAX_MESSAGE_LENGTH) {
+      throw new Error(`Message too long (max ${MAX_MESSAGE_LENGTH} characters)`);
+    }
+
+    const sanitizedMessage = sanitizeInput(message, MAX_MESSAGE_LENGTH);
+    const sanitizedLanguage = validateLanguage(language);
+    const sanitizedChildName = childName ? sanitizeInput(childName, MAX_CHILD_NAME_LENGTH) : undefined;
+    
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     
     if (!OPENAI_API_KEY) {
       console.error('OPENAI_API_KEY is not configured');
       throw new Error('AI service unavailable');
-    }
-
-    if (!message || typeof message !== 'string') {
-      throw new Error('Message is required and must be a string');
     }
 
     // Compact system prompts for faster processing
@@ -33,20 +74,28 @@ serve(async (req) => {
       hi: 'Jubee, cheerful bee for 3-7 kids! "buzz!", "Hooray!" Fun words! BIG emotions! 1-2 SHORT sentences *buzz* and emojis!'
     };
 
-    const systemPrompt = systemPrompts[language] || systemPrompts.en;
+    const systemPrompt = systemPrompts[sanitizedLanguage] || systemPrompts.en;
     
-    // Compact context - fewer tokens
+    // SECURITY: Sanitize context with limits
     let ctx = '';
-    if (childName) ctx += `Child: ${childName}. `;
-    if (context.activity) ctx += `Doing: ${context.activity}. `;
-    if (context.mood) ctx += `Mood: ${context.mood}.`;
+    if (sanitizedChildName) {
+      ctx += `Child: ${sanitizedChildName}. `;
+    }
+    if (context.activity && typeof context.activity === 'string') {
+      const activity = sanitizeInput(context.activity, MAX_CONTEXT_LENGTH);
+      ctx += `Doing: ${activity}. `;
+    }
+    if (context.mood) {
+      const mood = validateMood(context.mood);
+      if (mood) ctx += `Mood: ${mood}.`;
+    }
 
     const messages = [
       { role: 'system', content: systemPrompt + (ctx ? ' ' + ctx : '') },
-      { role: 'user', content: message }
+      { role: 'user', content: sanitizedMessage }
     ];
 
-    console.log('Streaming response for language:', language);
+    console.log('Streaming response for language:', sanitizedLanguage);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
