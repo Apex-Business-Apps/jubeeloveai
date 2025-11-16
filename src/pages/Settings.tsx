@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { useNavigate } from 'react-router-dom';
 import { useOnboardingStore } from '@/store/useOnboardingStore';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function SettingsPage() {
   const { t } = useTranslation();
@@ -23,6 +24,7 @@ export default function SettingsPage() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [testingVoice, setTestingVoice] = useState<JubeeVoice | null>(null);
   const { startOnboarding } = useOnboardingStore();
+  const { user } = useAuth();
 
   const themes = [
     { name: 'morning', icon: Sunrise, label: 'Morning' },
@@ -102,7 +104,11 @@ export default function SettingsPage() {
               🔐 Account
             </CardTitle>
             <CardDescription className="text-primary">
-              You're signed in and your data is securely synced across devices
+              {user ? (
+                <>You're signed in as {user.email} - data is synced across devices</>
+              ) : (
+                <>You're playing offline - sign in from the header to sync data across devices</>
+              )}
             </CardDescription>
           </CardHeader>
         </Card>
