@@ -95,6 +95,18 @@ export default function SettingsPage() {
           </p>
         </header>
 
+        {/* Account Info */}
+        <Card className="border-4 border-primary/30">
+          <CardHeader>
+            <CardTitle className="text-primary flex items-center gap-2">
+              🔐 Account
+            </CardTitle>
+            <CardDescription className="text-primary">
+              You're signed in and your data is securely synced across devices
+            </CardDescription>
+          </CardHeader>
+        </Card>
+
         {/* Language Selection */}
         <LanguageSelector />
 
