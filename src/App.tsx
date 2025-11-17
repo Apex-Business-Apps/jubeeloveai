@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState, useRef } from 'react';
+import { Suspense, lazy, useEffect, useState, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Canvas } from '@react-three/fiber';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
@@ -32,6 +32,7 @@ import { useOnboardingStore } from './store/useOnboardingStore';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './hooks/useAuth';
 import { LogOut, LogIn } from 'lucide-react';
+import { useJubeeNarrator } from './hooks/useJubeeNarrator';
 
 const WritingCanvas = lazy(() => import('./modules/writing/WritingCanvas'));
 const ShapeSorter = lazy(() => import('./modules/shapes/ShapeSorter'));
@@ -75,6 +76,29 @@ function AchievementTracker() {
   }, [setActivityCompleteCallback, trackActivity, checkAchievements]);
 
   return null;
+}
+
+function NarrationGuard() {
+  const { stop } = useJubeeNarrator();
+  const location = useLocation();
+
+  useEffect(() => {
+    stop();
+  }, [location.pathname, stop]);
+
+  return null;
+}
+
+function JubeePortalContainer({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const isParentSpace = location.pathname.startsWith('/auth')
+    || location.pathname.startsWith('/parental')
+    || location.pathname.startsWith('/parent')
+    || location.pathname.startsWith('/performance-monitor');
+
+  if (isParentSpace) return null;
+
+  return <>{children}</>;
 }
 
 export default function App() {
@@ -131,6 +155,7 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
+          <NarrationGuard />
           <AchievementTracker />
           <SEO />
           <div className="app" data-theme={currentTheme}>
@@ -206,74 +231,77 @@ export default function App() {
             </header>
 
             {/* Jubee rendered via Portal at document.body level for global viewport freedom */}
-            {isVisible && createPortal(
-              <div
-                ref={jubeeContainerRef}
-                className="jubee-container"
-                aria-hidden="true"
-                style={{
-                  position: 'fixed',
-                  bottom: `${containerPosition.bottom}px`,
-                  right: `${containerPosition.right}px`,
-                  width: '400px',
-                  height: '450px',
-                  zIndex: 9999,
-                  transition: isDragging ? 'none' : 'bottom 0.3s ease, right 0.3s ease',
-                  touchAction: 'none',
-                  pointerEvents: 'auto'
-                }}
-              >
-                <JubeeErrorBoundary>
-                  <Canvas
-                    key={`jubee-canvas-${isVisible}`}
-                    camera={{ position: [0, 0, 6], fov: 45 }}
-                    shadows
-                    style={{ 
-                      background: 'transparent',
-                      width: '100%',
-                      height: '100%',
-                      display: 'block'
-                    }}
-                    gl={{
-                      antialias: true,
-                      alpha: true,
-                      powerPreference: "high-performance"
-                    }}
-                    onCreated={({ gl }) => {
-                      console.log('[Jubee] Canvas created via Portal with dimensions: 400x450');
-                      gl.setClearColor('#000000', 0);
-                      gl.setSize(400, 450);
-                    }}
-                  >
-                    <ambientLight intensity={1.2} />
-                    <directionalLight
-                      position={[5, 5, 5]}
-                      intensity={1.5}
-                      castShadow
-                      shadow-mapSize-width={2048}
-                      shadow-mapSize-height={2048}
-                    />
-                    <directionalLight
-                      position={[-5, 3, -5]}
-                      intensity={0.8}
-                      color="#ffd700"
-                    />
-                    <hemisphereLight
-                      color="#87CEEB"
-                      groundColor="#FFD700"
-                      intensity={0.6}
-                    />
-                    <Suspense fallback={null}>
-                      <JubeeMascot
-                        position={[jubeePosition.x, jubeePosition.y, jubeePosition.z]}
-                        animation={jubeeAnimation}
+            <JubeePortalContainer>
+              {isVisible && createPortal(
+                <div
+                  ref={jubeeContainerRef}
+                  className="jubee-container"
+                  aria-hidden="true"
+                  style={{
+                    position: 'fixed',
+                    bottom: `${containerPosition.bottom}px`,
+                    right: `${containerPosition.right}px`,
+                    width: '400px',
+                    height: '450px',
+                    zIndex: 9999,
+                    transition: isDragging ? 'none' : 'bottom 0.3s ease, right 0.3s ease',
+                    touchAction: 'none',
+                    pointerEvents: 'auto',
+                    background: 'transparent'
+                  }}
+                >
+                  <JubeeErrorBoundary>
+                    <Canvas
+                      key={`jubee-canvas-${isVisible}`}
+                      camera={{ position: [0, 0, 6], fov: 45 }}
+                      shadows
+                      style={{
+                        background: 'transparent',
+                        width: '100%',
+                        height: '100%',
+                        display: 'block'
+                      }}
+                      gl={{
+                        antialias: true,
+                        alpha: true,
+                        powerPreference: "high-performance"
+                      }}
+                      onCreated={({ gl }) => {
+                        console.log('[Jubee] Canvas created via Portal with dimensions: 400x450');
+                        gl.setClearColor('#000000', 0);
+                        gl.setSize(400, 450);
+                      }}
+                    >
+                      <ambientLight intensity={1.2} />
+                      <directionalLight
+                        position={[5, 5, 5]}
+                        intensity={1.5}
+                        castShadow
+                        shadow-mapSize-width={2048}
+                        shadow-mapSize-height={2048}
                       />
-                    </Suspense>
-                  </Canvas>
-                </JubeeErrorBoundary>
-              </div>,
-              document.body
-            )}
+                      <directionalLight
+                        position={[-5, 3, -5]}
+                        intensity={0.8}
+                        color="#ffd700"
+                      />
+                      <hemisphereLight
+                        color="#87CEEB"
+                        groundColor="#FFD700"
+                        intensity={0.6}
+                      />
+                      <Suspense fallback={null}>
+                        <JubeeMascot
+                          position={[jubeePosition.x, jubeePosition.y, jubeePosition.z]}
+                          animation={jubeeAnimation}
+                        />
+                      </Suspense>
+                    </Canvas>
+                  </JubeeErrorBoundary>
+                </div>,
+                document.body
+              )}
+            </JubeePortalContainer>
 
             <main className="main-content" role="main" style={{ paddingTop: '80px' }}>
               <Suspense fallback={<LoadingScreen message="Loading activity" />}>
