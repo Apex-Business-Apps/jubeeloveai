@@ -20,6 +20,9 @@ interface TimerEntry {
 // Cleanup timers map - can store either Timeout or TimerEntry
 const timers = new Map<string, NodeJS.Timeout | TimerEntry>()
 
+// Track active browser speech utterance to prevent overlaps
+let activeUtterance: SpeechSynthesisUtterance | null = null
+
 import { audioManager } from '@/lib/audioManager'
 
 export type JubeeVoice = 'shimmer' | 'nova' | 'alloy' | 'echo' | 'fable' | 'onyx'
@@ -44,6 +47,7 @@ interface JubeeState {
   setIsDragging: (isDragging: boolean) => void
   triggerAnimation: (animation: string) => void
   triggerPageTransition: () => void
+  stopSpeech: () => void
   speak: (text: string, mood?: 'happy' | 'excited' | 'frustrated' | 'curious' | 'tired') => void
   converse: (message: string, context?: ConversationContext) => Promise<string>
   cleanup: () => void
@@ -166,67 +170,96 @@ export const useJubeeStore = create<JubeeState>()(
           timers.delete('transition')
           console.log('[Jubee] Page transition complete')
         }, 1200)
-        
+
         timers.set('transition', timer)
       },
 
-    speak: async (text, mood = 'happy') => {
-      const gender = get().gender
-      const voice = get().voice
-      const language = window.i18nextLanguage || 'en'
-      
-      set((state) => { 
-        state.speechText = text
-        state.lastError = null
-        state.interactionCount += 1
-      })
+      stopSpeech: () => {
+        // Stop any currently playing audio
+        audioManager.stopCurrentAudio()
 
-      // Check cache first for instant playback
-      const cachedAudio = audioManager.getCachedAudio(text, voice, mood)
-      if (cachedAudio) {
-        await audioManager.playAudio(cachedAudio)
-        set((state) => { state.speechText = '' })
-        return
-      }
-      
-      // Single TTS request with timeout
-      try {
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 8000) // 8s timeout
+        // Cancel any in-progress browser speech
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel()
+        }
 
-        const response = await fetch('https://kphdqgidwipqdthehckg.supabase.co/functions/v1/text-to-speech', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, gender, language, mood, voice }),
-          signal: controller.signal,
+        if (activeUtterance) {
+          activeUtterance.onend = null
+          activeUtterance.onerror = null
+          activeUtterance = null
+        }
+
+        // Clear any pending speech timers and text
+        const existingTimer = timers.get('speech')
+        if (existingTimer && typeof existingTimer !== 'object') {
+          clearTimeout(existingTimer)
+          timers.delete('speech')
+        }
+
+        set((state) => {
+          state.speechText = ''
+        })
+      },
+
+      speak: async (text, mood = 'happy') => {
+        get().stopSpeech()
+
+        const gender = get().gender
+        const voice = get().voice
+        const language = window.i18nextLanguage || 'en'
+
+        set((state) => {
+          state.speechText = text
+          state.lastError = null
+          state.interactionCount += 1
         })
 
-        clearTimeout(timeoutId)
-
-        if (response.ok) {
-          const audioBlob = await response.blob()
-          
-          // Cache for future use
-          audioManager.cacheAudio(text, audioBlob, voice, mood)
-          
-          await audioManager.playAudio(audioBlob)
+        // Check cache first for instant playback
+        const cachedAudio = audioManager.getCachedAudio(text, voice, mood)
+        if (cachedAudio) {
+          await audioManager.playAudio(cachedAudio)
           set((state) => { state.speechText = '' })
           return
         }
-      } catch (error) {
-        console.error('TTS failed:', error)
-      }
 
-      // All retries failed, use browser speech fallback
-      console.warn('TTS service unavailable, using browser fallback')
-      set((state) => { state.lastError = 'TTS_FALLBACK' })
-      browserSpeech(text, gender, mood)
-      const timer = setTimeout(() => {
-        set((state) => { state.speechText = '' })
-        timers.delete('speech')
-      }, 3000)
-      timers.set('speech', timer)
-    },
+        // Single TTS request with timeout
+        try {
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 8000) // 8s timeout
+
+          const response = await fetch('https://kphdqgidwipqdthehckg.supabase.co/functions/v1/text-to-speech', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, gender, language, mood, voice }),
+            signal: controller.signal,
+          })
+
+          clearTimeout(timeoutId)
+
+          if (response.ok) {
+            const audioBlob = await response.blob()
+
+            // Cache for future use
+            audioManager.cacheAudio(text, audioBlob, voice, mood)
+
+            await audioManager.playAudio(audioBlob)
+            set((state) => { state.speechText = '' })
+            return
+          }
+        } catch (error) {
+          console.error('TTS failed:', error)
+        }
+
+        // All retries failed, use browser speech fallback
+        console.warn('TTS service unavailable, using browser fallback')
+        set((state) => { state.lastError = 'TTS_FALLBACK' })
+        browserSpeech(text, gender, mood)
+        const timer = setTimeout(() => {
+          set((state) => { state.speechText = '' })
+          timers.delete('speech')
+        }, 3000)
+        timers.set('speech', timer)
+      },
 
     converse: async (message, context = {}) => {
       const state = get()
@@ -336,6 +369,7 @@ export const useJubeeStore = create<JubeeState>()(
 
       cleanup: () => {
         console.log('[Jubee] Cleanup called')
+        get().stopSpeech()
         timers.forEach((timer) => {
           // Only clear actual timeout timers, not TimerEntry objects
           if (!('time' in timer)) {
@@ -343,12 +377,8 @@ export const useJubeeStore = create<JubeeState>()(
           }
         })
         timers.clear()
-        
+
         audioManager.cleanup()
-        
-        if ('speechSynthesis' in window) {
-          speechSynthesis.cancel()
-        }
       }
     })),
     {
@@ -481,7 +511,16 @@ if (typeof window !== 'undefined') {
 // Browser speech fallback helper with mood support
 function browserSpeech(text: string, gender: 'male' | 'female', mood: string = 'happy') {
   if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(text)
+
+    activeUtterance = utterance
+    utterance.onend = () => {
+      activeUtterance = null
+    }
+    utterance.onerror = () => {
+      activeUtterance = null
+    }
     
     // Set language based on i18n
     const language = window.i18nextLanguage || 'en'

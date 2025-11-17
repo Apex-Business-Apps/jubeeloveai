@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useJubeeStore } from '../../store/useJubeeStore'
 import { useGameStore } from '../../store/useGameStore'
 import { triggerHaptic } from '@/lib/hapticFeedback'
+import { useJubeeNarrator } from '@/hooks/useJubeeNarrator'
 
 interface StoryPage {
   id: number
@@ -88,10 +89,18 @@ const stories = [
 export default function StoryTime() {
   const [selectedStory, setSelectedStory] = useState<typeof stories[0] | null>(null)
   const [currentPage, setCurrentPage] = useState(0)
-  const { speak, triggerAnimation } = useJubeeStore()
+  const { triggerAnimation } = useJubeeStore()
+  const { speak, stop } = useJubeeNarrator()
   const { addScore } = useGameStore()
 
+  useEffect(() => {
+    return () => {
+      stop()
+    }
+  }, [stop])
+
   const handleStorySelect = (story: typeof stories[0]) => {
+    stop()
     setSelectedStory(story)
     setCurrentPage(0)
     triggerHaptic('light')
@@ -183,7 +192,13 @@ export default function StoryTime() {
   const progress = ((currentPage + 1) / selectedStory.pages.length) * 100
 
   return (
-    <div className="story-reader p-8 max-w-4xl mx-auto">
+    <div
+      className="story-reader p-8 max-w-4xl mx-auto rounded-[32px] relative overflow-hidden"
+      style={{
+        background: 'var(--gradient-subtle)',
+        boxShadow: 'var(--shadow-game)'
+      }}
+    >
       <div className="story-header mb-8">
         <h1 className="text-4xl font-bold text-center mb-4 text-game">
           {selectedStory.title}
@@ -203,12 +218,13 @@ export default function StoryTime() {
       </div>
 
       <div
-        className="story-page p-12 rounded-3xl mb-8 bg-card border-4 border-game-accent flex flex-col items-center justify-center cursor-pointer active:scale-98 transition-transform"
+        className="story-page p-12 rounded-3xl mb-8 flex flex-col items-center justify-center cursor-pointer active:scale-98 transition-transform"
         style={{
           boxShadow: 'var(--shadow-accent)',
           minHeight: '400px',
           touchAction: 'manipulation',
-          WebkitTapHighlightColor: 'transparent'
+          WebkitTapHighlightColor: 'transparent',
+          background: 'linear-gradient(145deg, hsla(var(--primary) / 0.16), hsla(var(--accent) / 0.14)), #fff'
         }}
         onClick={handleNextPage}
         role="button"
