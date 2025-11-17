@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { SEO } from '@/components/SEO';
-import { Loader2, Mail, Lock, User } from 'lucide-react';
+import { Loader2, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
+import { validateEmail, validatePassword, authSchemas } from '@/lib/inputValidation';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -17,6 +18,9 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordStrength, setPasswordStrength] = useState<'weak' | 'medium' | 'strong'>('weak');
 
   useEffect(() => {
     // Check if user is already logged in
@@ -39,20 +43,27 @@ export default function Auth() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
-      toast({
-        title: "Missing information",
-        description: "Please enter both email and password",
-        variant: "destructive",
-      });
+    // Validate inputs
+    const emailValidation = validateEmail(email);
+    const passwordValidation = validatePassword(password);
+    
+    if (!emailValidation.valid) {
+      setEmailError(emailValidation.error || 'Invalid email');
       return;
     }
-
+    
+    if (!passwordValidation.valid) {
+      setPasswordError(passwordValidation.error || 'Invalid password');
+      return;
+    }
+    
+    setEmailError('');
+    setPasswordError('');
     setLoading(true);
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: emailValidation.sanitized,
         password,
       });
 
@@ -96,36 +107,44 @@ export default function Auth() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email || !password) {
+    // Validate inputs
+    const emailValidation = validateEmail(email);
+    const passwordValidation = validatePassword(password);
+    
+    if (!emailValidation.valid) {
+      setEmailError(emailValidation.error || 'Invalid email');
+      return;
+    }
+    
+    if (!passwordValidation.valid) {
+      setPasswordError(passwordValidation.error || 'Invalid password');
+      return;
+    }
+    
+    // Check password strength
+    if (passwordValidation.strength === 'weak') {
       toast({
-        title: "Missing information",
-        description: "Please enter both email and password",
+        title: "Weak password",
+        description: "Please use a stronger password with uppercase, lowercase, numbers, and symbols",
         variant: "destructive",
       });
       return;
     }
-
-    if (password.length < 6) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters long",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    
+    setEmailError('');
+    setPasswordError('');
     setLoading(true);
 
     try {
       const redirectUrl = `${window.location.origin}/`;
       
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: emailValidation.sanitized,
         password,
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            display_name: displayName || email.split('@')[0],
+            display_name: displayName || emailValidation.sanitized.split('@')[0],
           }
         }
       });
@@ -150,7 +169,7 @@ export default function Auth() {
           .from('profiles')
           .insert({
             user_id: data.user.id,
-            display_name: displayName || email.split('@')[0],
+            display_name: displayName || emailValidation.sanitized.split('@')[0],
           });
 
         if (profileError) {
@@ -241,11 +260,26 @@ export default function Auth() {
                       type="email"
                       placeholder="you@example.com"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setEmailError('');
+                      }}
+                      onBlur={() => {
+                        const validation = validateEmail(email);
+                        if (!validation.valid && email) {
+                          setEmailError(validation.error || '');
+                        }
+                      }}
                       disabled={loading}
                       required
-                      className="h-12 text-base"
+                      className={`h-12 text-base ${emailError ? 'border-destructive' : ''}`}
                     />
+                    {emailError && (
+                      <p className="text-sm text-destructive flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" />
+                        {emailError}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -258,11 +292,20 @@ export default function Auth() {
                       type="password"
                       placeholder="••••••••"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setPasswordError('');
+                      }}
                       disabled={loading}
                       required
-                      className="h-12 text-base"
+                      className={`h-12 text-base ${passwordError ? 'border-destructive' : ''}`}
                     />
+                    {passwordError && (
+                      <p className="text-sm text-destructive flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" />
+                        {passwordError}
+                      </p>
+                    )}
                   </div>
 
                   <Button
