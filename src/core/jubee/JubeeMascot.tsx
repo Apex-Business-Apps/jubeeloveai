@@ -16,6 +16,7 @@
 import { useRef, useEffect, useState, useMemo } from 'react'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { Text, Sparkles } from '@react-three/drei'
+import { useSpring, a, config } from '@react-spring/three'
 import { Group, Mesh } from 'three'
 import { useJubeeStore } from '../../store/useJubeeStore'
 import * as THREE from 'three'
@@ -84,6 +85,22 @@ export function JubeeMascot({ position = [0, 0, 0], animation = 'idle' }: JubeeP
   // Memoize current colors from design system
   const currentColors = useMemo(() => getJubeeColors(gender), [gender])
   
+  // Spring physics for scale animations - bouncy click feedback
+  const [{ scale }, springApi] = useSpring(() => ({
+    scale: 1,
+    config: {
+      tension: 300,
+      friction: 10,
+      mass: 0.5
+    }
+  }))
+
+  // Spring physics for hover effect
+  const [{ hoverScale }, hoverSpringApi] = useSpring(() => ({
+    hoverScale: 1,
+    config: config.wobbly
+  }))
+  
   // Mount/unmount logging
   useEffect(() => {
     console.log('[Jubee] JubeeMascot mounted')
@@ -99,9 +116,48 @@ export function JubeeMascot({ position = [0, 0, 0], animation = 'idle' }: JubeeP
     speak(randomGreeting)
     triggerAnimation('celebrate')
     
+    // Bouncy spring animation on click
+    springApi.start({
+      scale: 1.3,
+      config: {
+        tension: 400,
+        friction: 8
+      }
+    })
+    setTimeout(() => {
+      springApi.start({
+        scale: 1,
+        config: {
+          tension: 300,
+          friction: 10
+        }
+      })
+    }, 150)
+    
     // Show click feedback tooltip
     setShowClickFeedback(true)
     setTimeout(() => setShowClickFeedback(false), 2000)
+  }
+
+  const handlePointerOver = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation()
+    setIsHovered(true)
+    document.body.style.cursor = 'pointer'
+    // Spring hover effect
+    hoverSpringApi.start({
+      hoverScale: 1.1,
+      config: config.wobbly
+    })
+  }
+
+  const handlePointerOut = () => {
+    setIsHovered(false)
+    document.body.style.cursor = 'default'
+    // Spring back to normal
+    hoverSpringApi.start({
+      hoverScale: 1,
+      config: config.gentle
+    })
   }
 
   useFrame((state) => {
@@ -196,12 +252,6 @@ export function JubeeMascot({ position = [0, 0, 0], animation = 'idle' }: JubeeP
     } else if (animation !== 'pageTransition') {
       group.current.rotation.y = 0
     }
-
-    // Hover effect - reuse vector objects
-    if (group.current) {
-      targetScale.set(isHovered ? 1.1 : 1, isHovered ? 1.1 : 1, isHovered ? 1.1 : 1)
-      group.current.scale.lerp(targetScale, 0.1)
-    }
     } catch (error) {
       console.error('[Jubee] Error in useFrame:', error)
       // Continue with minimal safe operations
@@ -209,12 +259,14 @@ export function JubeeMascot({ position = [0, 0, 0], animation = 'idle' }: JubeeP
   })
 
   return (
-    <group
+    <a.group
       ref={group}
       position={position}
+      // @ts-ignore - react-spring types
+      scale={scale.to(s => [s * hoverScale.get(), s * hoverScale.get(), s * hoverScale.get()])}
       onClick={handleClick}
-      onPointerOver={() => setIsHovered(true)}
-      onPointerOut={() => setIsHovered(false)}
+      onPointerOver={handlePointerOver}
+      onPointerOut={handlePointerOut}
     >
       {/* Hover indicator ring */}
       {isHovered && (
@@ -592,6 +644,6 @@ export function JubeeMascot({ position = [0, 0, 0], animation = 'idle' }: JubeeP
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
       />
-    </group>
+    </a.group>
   )
 }
