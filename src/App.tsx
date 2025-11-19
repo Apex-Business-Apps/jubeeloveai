@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { motion, useSpring } from 'framer-motion';
 import { JubeeMascot } from './core/jubee/JubeeMascot';
 import { useGameStore } from './store/useGameStore';
 import { useJubeeStore } from './store/useJubeeStore';
@@ -100,6 +101,24 @@ export default function App() {
   }, [hasCompletedOnboarding, startOnboarding]);
   const { position: jubeePosition, currentAnimation: jubeeAnimation, isVisible, toggleVisibility, containerPosition, isDragging } = useJubeeStore();
   const { children, activeChildId } = useParentalStore();
+
+  // Spring physics for container positioning
+  const springBottom = useSpring(containerPosition.bottom, {
+    stiffness: 300,
+    damping: 30,
+    mass: 0.8
+  });
+  const springRight = useSpring(containerPosition.right, {
+    stiffness: 300,
+    damping: 30,
+    mass: 0.8
+  });
+
+  // Update spring values when containerPosition changes
+  useEffect(() => {
+    springBottom.set(containerPosition.bottom);
+    springRight.set(containerPosition.right);
+  }, [containerPosition.bottom, containerPosition.right, springBottom, springRight]);
 
   // Enable collision detection, dragging, and visibility monitoring
   useJubeeCollision(jubeeContainerRef);
@@ -208,21 +227,19 @@ export default function App() {
 
             {/* Jubee rendered via Portal at document.body level for global viewport freedom */}
             {isVisible && createPortal(
-              <div
+              <motion.div
                 ref={jubeeContainerRef}
                 className="jubee-container"
                 aria-hidden="true"
                 style={{
                   position: 'fixed',
-                  bottom: `${containerPosition.bottom}px`,
-                  right: `${containerPosition.right}px`,
+                  bottom: isDragging ? containerPosition.bottom : springBottom,
+                  right: isDragging ? containerPosition.right : springRight,
                   width: '400px',
                   height: '450px',
                   zIndex: 9999,
-                  transition: isDragging ? 'none' : 'bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1), right 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                   touchAction: 'none',
-                  pointerEvents: 'auto',
-                  willChange: isDragging ? 'bottom, right' : 'auto'
+                  pointerEvents: 'auto'
                 }}
               >
                 <JubeeErrorBoundary>
@@ -273,7 +290,7 @@ export default function App() {
                     </Suspense>
                   </Canvas>
                 </JubeeErrorBoundary>
-              </div>,
+              </motion.div>,
               document.body
             )}
 
