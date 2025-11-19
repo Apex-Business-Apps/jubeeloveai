@@ -16,9 +16,40 @@ try {
 // Register service worker for PWA (production only to avoid caching issues in dev)
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
+    const APP_VERSION = '1.0.1';
+    const VERSION_KEY = 'app_version';
+    
+    // Clear old caches silently if version changed
+    const storedVersion = localStorage.getItem(VERSION_KEY);
+    if (storedVersion && storedVersion !== APP_VERSION) {
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => caches.delete(cacheName))
+        );
+      }).then(() => {
+        localStorage.setItem(VERSION_KEY, APP_VERSION);
+        logger.dev('Caches cleared for version update:', APP_VERSION);
+      }).catch(err => logger.error('Cache clearing failed:', err));
+    } else if (!storedVersion) {
+      localStorage.setItem(VERSION_KEY, APP_VERSION);
+    }
+    
     navigator.serviceWorker.register('/sw.js').then(
       (registration) => {
         logger.dev('ServiceWorker registration successful:', registration.scope);
+        
+        // Auto-update on new service worker
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New version available, reload silently after a delay
+                setTimeout(() => window.location.reload(), 1000);
+              }
+            });
+          }
+        });
         
         // Check for updates periodically
         setInterval(() => {
