@@ -7,6 +7,7 @@ import { triggerHaptic } from '@/lib/hapticFeedback'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { premiumStories } from '@/data/storySeedData'
+import { initializeStories } from '@/lib/initializeStories'
 
 interface StoryPage {
   id: number
@@ -43,6 +44,9 @@ export default function StoryTime() {
     try {
       setLoading(true)
       
+      // Initialize stories if database is empty
+      await initializeStories()
+      
       // Fetch all stories from database
       const { data: dbStories, error } = await supabase
         .from('stories')
@@ -52,14 +56,14 @@ export default function StoryTime() {
       if (error) throw error
 
       // If no stories in database, use local stories as fallback
-      const storiesToUse = dbStories && dbStories.length > 0 
+      const storiesToUse: Story[] = dbStories && dbStories.length > 0 
         ? dbStories.map(s => ({
             id: s.id,
             title: s.title,
             category: s.category,
             age_range: s.age_range,
             description: s.description || '',
-            pages: s.pages as StoryPage[]
+            pages: s.pages as unknown as StoryPage[]
           }))
         : premiumStories.map((s, idx) => ({
             id: `local-${idx}`,
@@ -132,11 +136,6 @@ export default function StoryTime() {
   }
 
   const handleStorySelect = (story: Story) => {
-  const [currentPage, setCurrentPage] = useState(0)
-  const { speak, triggerAnimation } = useJubeeStore()
-  const { addScore } = useGameStore()
-
-  const handleStorySelect = (story: typeof stories[0]) => {
     setSelectedStory(story)
     setCurrentPage(0)
     triggerHaptic('light')
@@ -157,6 +156,7 @@ export default function StoryTime() {
       triggerAnimation('excited')
     } else {
       // Story completed
+      markStoryComplete(selectedStory.id)
       addScore(50)
       triggerAnimation('celebrate')
       speak("Great job reading the story! You earned 50 points!")
@@ -201,25 +201,36 @@ export default function StoryTime() {
           Choose a story to read with Jubee!
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {stories.map((story) => (
-            <button
-              key={story.id}
-              onClick={() => handleStorySelect(story)}
-              className="story-card p-8 rounded-3xl transform hover:scale-105 transition-all duration-300 cursor-pointer border-4 border-game-accent active:scale-95"
-              style={{
-                background: 'var(--gradient-warm)',
-                boxShadow: 'var(--shadow-game)',
-                touchAction: 'manipulation',
-                WebkitTapHighlightColor: 'transparent'
-              }}
-            >
-              <div className="text-8xl mb-4">{story.pages[0].illustration}</div>
-              <h2 className="text-3xl font-bold text-primary-foreground mb-2">{story.title}</h2>
-              <p className="text-xl text-primary-foreground opacity-90">{story.pages.length} pages</p>
-            </button>
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-12 w-12 animate-spin text-game" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {stories.map((story) => (
+              <button
+                key={story.id}
+                onClick={() => handleStorySelect(story)}
+                className="story-card p-8 rounded-3xl transform hover:scale-105 transition-all duration-300 cursor-pointer border-4 border-game-accent active:scale-95 relative"
+                style={{
+                  background: 'var(--gradient-warm)',
+                  boxShadow: 'var(--shadow-game)',
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'transparent'
+                }}
+              >
+                {story.completed && (
+                  <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                    ✓ Completed
+                  </div>
+                )}
+                <div className="text-8xl mb-4">{story.pages[0].illustration}</div>
+                <h2 className="text-3xl font-bold text-primary-foreground mb-2">{story.title}</h2>
+                <p className="text-xl text-primary-foreground opacity-90">{story.pages.length} pages</p>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     )
   }
