@@ -363,6 +363,47 @@ export type Database = {
           },
         ]
       }
+      usage_sessions: {
+        Row: {
+          child_profile_id: string | null
+          created_at: string | null
+          duration_seconds: number | null
+          id: string
+          session_end: string | null
+          session_start: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          child_profile_id?: string | null
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          session_end?: string | null
+          session_start?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          child_profile_id?: string | null
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          session_end?: string | null
+          session_start?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_sessions_child_profile_id_fkey"
+            columns: ["child_profile_id"]
+            isOneToOne: false
+            referencedRelation: "children_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
