@@ -5,9 +5,11 @@ import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
 import { triggerHaptic } from '@/lib/hapticFeedback'
 import { toast } from 'sonner'
-import { Loader2, Volume2 } from 'lucide-react'
+import { Loader2, Volume2, Pause, Play } from 'lucide-react'
 import { premiumStories } from '@/data/storySeedData'
 import { initializeStories } from '@/lib/initializeStories'
+import { audioManager } from '@/lib/audioManager'
+import { Slider } from '@/components/ui/slider'
 
 interface StoryPage {
   id: number
@@ -32,6 +34,8 @@ export default function StoryTime() {
   const [currentPage, setCurrentPage] = useState(0)
   const [loading, setLoading] = useState(true)
   const [isNarrating, setIsNarrating] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
+  const [playbackSpeed, setPlaybackSpeed] = useState(1)
   const { speak, triggerAnimation } = useJubeeStore()
   const { addScore } = useGameStore()
   const { user } = useAuth()
@@ -145,10 +149,13 @@ export default function StoryTime() {
     // Auto-play the first page's narration
     setTimeout(() => {
       setIsNarrating(true)
+      setIsPaused(false)
       speak(story.pages[0].narration)
-      // Estimate narration duration (roughly 150 words per minute)
+      // Set playback speed
+      audioManager.setPlaybackSpeed(playbackSpeed)
+      // Estimate narration duration
       const words = story.pages[0].narration.split(' ').length
-      const duration = (words / 150) * 60 * 1000
+      const duration = (words / 150) * 60 * 1000 / playbackSpeed
       setTimeout(() => setIsNarrating(false), duration)
     }, 1000)
   }
@@ -163,11 +170,14 @@ export default function StoryTime() {
       setCurrentPage(prev => prev + 1)
       const nextPage = selectedStory.pages[currentPage + 1]
       setIsNarrating(true)
+      setIsPaused(false)
       speak(nextPage.narration)
       triggerAnimation('excited')
+      // Set playback speed
+      audioManager.setPlaybackSpeed(playbackSpeed)
       // Estimate narration duration
       const words = nextPage.narration.split(' ').length
-      const duration = (words / 150) * 60 * 1000
+      const duration = (words / 150) * 60 * 1000 / playbackSpeed
       setTimeout(() => setIsNarrating(false), duration)
     } else {
       // Story completed
@@ -175,6 +185,7 @@ export default function StoryTime() {
       addScore(50)
       triggerAnimation('celebrate')
       setIsNarrating(true)
+      setIsPaused(false)
       speak("Great job reading the story! You earned 50 points!")
       setTimeout(() => {
         setIsNarrating(false)
@@ -193,11 +204,14 @@ export default function StoryTime() {
       const prevPage = selectedStory!.pages[currentPage - 1]
       triggerHaptic('light')
       setIsNarrating(true)
+      setIsPaused(false)
       speak(prevPage.narration)
       triggerAnimation('excited')
+      // Set playback speed
+      audioManager.setPlaybackSpeed(playbackSpeed)
       // Estimate narration duration
       const words = prevPage.narration.split(' ').length
-      const duration = (words / 150) * 60 * 1000
+      const duration = (words / 150) * 60 * 1000 / playbackSpeed
       setTimeout(() => setIsNarrating(false), duration)
     }
   }
@@ -210,12 +224,37 @@ export default function StoryTime() {
     const page = selectedStory.pages[currentPage]
     triggerHaptic('light')
     setIsNarrating(true)
+    setIsPaused(false)
     speak(page.narration)
     triggerAnimation('excited')
+    // Set playback speed
+    audioManager.setPlaybackSpeed(playbackSpeed)
     // Estimate narration duration
     const words = page.narration.split(' ').length
-    const duration = (words / 150) * 60 * 1000
+    const duration = (words / 150) * 60 * 1000 / playbackSpeed
     setTimeout(() => setIsNarrating(false), duration)
+  }
+
+  const handlePauseResume = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (!isNarrating) return
+    
+    triggerHaptic('light')
+    if (isPaused) {
+      audioManager.resumeAudio()
+      setIsPaused(false)
+    } else {
+      audioManager.pauseAudio()
+      setIsPaused(true)
+    }
+  }
+
+  const handleSpeedChange = (value: number[]) => {
+    const newSpeed = value[0]
+    setPlaybackSpeed(newSpeed)
+    audioManager.setPlaybackSpeed(newSpeed)
   }
 
   if (!selectedStory) {
@@ -321,46 +360,90 @@ export default function StoryTime() {
         <p className="text-3xl text-card-foreground text-center leading-relaxed">{page.text}</p>
       </div>
 
-      <div className="controls flex gap-4 justify-center">
-        <button
-          onClick={handlePrevPage}
-          disabled={currentPage === 0}
-          className="px-8 py-4 text-2xl font-bold rounded-full disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95 transition-all text-primary-foreground border-3 border-game-accent min-h-[60px]"
-          style={{
-            background: currentPage === 0 ? 'var(--gradient-neutral)' : 'var(--gradient-warm)',
-            boxShadow: 'var(--shadow-game)',
-            touchAction: 'manipulation',
-            WebkitTapHighlightColor: 'transparent'
-          }}
-        >
-          ⬅️ Previous
-        </button>
+      <div className="controls-container space-y-6">
+        {/* Playback Controls */}
+        {isNarrating && (
+          <div className="playback-controls flex flex-col items-center gap-4 p-6 rounded-2xl bg-card border-2 border-game-accent">
+            <div className="flex items-center gap-6 w-full max-w-md">
+              <button
+                onClick={handlePauseResume}
+                className="p-4 rounded-full transform hover:scale-105 active:scale-95 transition-all text-primary-foreground border-2 border-game-accent"
+                style={{
+                  background: 'var(--gradient-game)',
+                  boxShadow: 'var(--shadow-accent)',
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'transparent'
+                }}
+                aria-label={isPaused ? 'Resume narration' : 'Pause narration'}
+              >
+                {isPaused ? <Play className="w-6 h-6" /> : <Pause className="w-6 h-6" />}
+              </button>
+              
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-medium text-card-foreground">Speed:</span>
+                  <span className="text-lg font-bold text-primary">{playbackSpeed.toFixed(1)}x</span>
+                </div>
+                <Slider
+                  value={[playbackSpeed]}
+                  onValueChange={handleSpeedChange}
+                  min={0.5}
+                  max={2}
+                  step={0.1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>0.5x</span>
+                  <span>1x</span>
+                  <span>2x</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-        <button
-          onClick={handleReadAloud}
-          className="px-8 py-4 text-2xl font-bold rounded-full transform hover:scale-105 active:scale-95 transition-all text-primary-foreground border-3 border-game-accent min-h-[60px]"
-          style={{
-            background: 'var(--gradient-game)',
-            boxShadow: 'var(--shadow-accent)',
-            touchAction: 'manipulation',
-            WebkitTapHighlightColor: 'transparent'
-          }}
-        >
-          🔊 Read Aloud
-        </button>
+        {/* Navigation Controls */}
+        <div className="navigation-controls flex gap-4 justify-center">
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage === 0}
+            className="px-8 py-4 text-2xl font-bold rounded-full disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95 transition-all text-primary-foreground border-3 border-game-accent min-h-[60px]"
+            style={{
+              background: currentPage === 0 ? 'var(--gradient-neutral)' : 'var(--gradient-warm)',
+              boxShadow: 'var(--shadow-game)',
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent'
+            }}
+          >
+            ⬅️ Previous
+          </button>
 
-        <button
-          onClick={handleNextPage}
-          className="px-8 py-4 text-2xl font-bold rounded-full transform hover:scale-105 active:scale-95 transition-all text-primary-foreground border-3 border-game-accent min-h-[60px]"
-          style={{
-            background: 'var(--gradient-cool)',
-            boxShadow: 'var(--shadow-game)',
-            touchAction: 'manipulation',
-            WebkitTapHighlightColor: 'transparent'
-          }}
-        >
-          {currentPage === selectedStory.pages.length - 1 ? '✓ Finish' : 'Next ➡️'}
-        </button>
+          <button
+            onClick={handleReadAloud}
+            className="px-8 py-4 text-2xl font-bold rounded-full transform hover:scale-105 active:scale-95 transition-all text-primary-foreground border-3 border-game-accent min-h-[60px]"
+            style={{
+              background: 'var(--gradient-game)',
+              boxShadow: 'var(--shadow-accent)',
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent'
+            }}
+          >
+            🔊 Read Aloud
+          </button>
+
+          <button
+            onClick={handleNextPage}
+            className="px-8 py-4 text-2xl font-bold rounded-full transform hover:scale-105 active:scale-95 transition-all text-primary-foreground border-3 border-game-accent min-h-[60px]"
+            style={{
+              background: 'var(--gradient-cool)',
+              boxShadow: 'var(--shadow-game)',
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent'
+            }}
+          >
+            {currentPage === selectedStory.pages.length - 1 ? '✓ Finish' : 'Next ➡️'}
+          </button>
+        </div>
       </div>
     </div>
   )
