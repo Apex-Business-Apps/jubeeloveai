@@ -20,8 +20,31 @@ interface ContainerDimensions {
   height: number;
 }
 
-// Unified safe margin for consistent boundary enforcement
-export const JUBEE_SAFE_MARGIN = 20;
+// Unified safe margin for consistent boundary enforcement - increased for better visibility
+export const JUBEE_SAFE_MARGIN = 80;
+
+/**
+ * Get responsive container dimensions based on viewport size
+ * Mobile: 300x360px (fits within smallest phones)
+ * Tablet: 350x400px (medium size)
+ * Desktop: 400x450px (full size)
+ */
+export function getResponsiveContainerDimensions(): ContainerDimensions {
+  const viewport = getViewportBounds();
+  
+  if (viewport.width < 768) {
+    // Mobile: smaller to fit within viewport
+    return { width: 300, height: 360 };
+  } else if (viewport.width < 1024) {
+    // Tablet: medium size
+    return { width: 350, height: 400 };
+  } else {
+    // Desktop: full size
+    return { width: 400, height: 450 };
+  }
+}
+
+// Legacy constants for backward compatibility
 export const JUBEE_CONTAINER_WIDTH = 400;
 export const JUBEE_CONTAINER_HEIGHT = 450;
 
@@ -36,13 +59,10 @@ export function getViewportBounds(): ViewportBounds {
 }
 
 /**
- * Get Jubee container dimensions
+ * Get Jubee container dimensions (now responsive)
  */
 export function getContainerDimensions(): ContainerDimensions {
-  return {
-    width: JUBEE_CONTAINER_WIDTH,
-    height: JUBEE_CONTAINER_HEIGHT
-  };
+  return getResponsiveContainerDimensions();
 }
 
 /**
@@ -79,14 +99,34 @@ export function validatePosition(position: ContainerPosition): ContainerPosition
 
 /**
  * Get a safe default position (bottom-right corner with margin)
+ * Adapts to viewport size to ensure full visibility
  */
 export function getSafeDefaultPosition(): ContainerPosition {
   const viewport = getViewportBounds();
   const container = getContainerDimensions();
   
-  // Position in bottom-right with comfortable margin
-  const defaultBottom = Math.max(120, JUBEE_SAFE_MARGIN);
-  const defaultRight = Math.max(100, JUBEE_SAFE_MARGIN);
+  // Calculate responsive default position based on viewport size
+  // Mobile: Center horizontally, position near bottom
+  // Tablet/Desktop: Bottom-right with comfortable margin
+  const isMobile = viewport.width < 768;
+  const isTablet = viewport.width >= 768 && viewport.width < 1024;
+  
+  let defaultBottom: number;
+  let defaultRight: number;
+  
+  if (isMobile) {
+    // Mobile: center horizontally, bottom position with extra margin
+    defaultBottom = Math.max(150, JUBEE_SAFE_MARGIN);
+    defaultRight = Math.max((viewport.width - container.width) / 2, JUBEE_SAFE_MARGIN);
+  } else if (isTablet) {
+    // Tablet: bottom-right with generous margin
+    defaultBottom = Math.max(180, JUBEE_SAFE_MARGIN);
+    defaultRight = Math.max(120, JUBEE_SAFE_MARGIN);
+  } else {
+    // Desktop: bottom-right with standard margin
+    defaultBottom = Math.max(200, JUBEE_SAFE_MARGIN);
+    defaultRight = Math.max(150, JUBEE_SAFE_MARGIN);
+  }
   
   // Ensure it fits within viewport
   return validatePosition({
