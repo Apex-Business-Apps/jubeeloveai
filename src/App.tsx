@@ -69,7 +69,8 @@ export default function App() {
   const { hasCompletedOnboarding, startOnboarding } = useOnboardingStore();
   
   // Monitor all systems for regressions (dev only)
-  useSystemHealthMonitor();
+  // TEMPORARILY DISABLED - investigating blank screen issue
+  // useSystemHealthMonitor();
   
 
   // Start onboarding for first-time users
