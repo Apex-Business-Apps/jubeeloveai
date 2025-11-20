@@ -1,0 +1,171 @@
+import { useEffect, useState, useCallback } from 'react';
+import { useParentalStore } from '@/store/useParentalStore';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+
+export interface ScreenTimeStatus {
+  isWithinSchedule: boolean;
+  remainingMinutes: number;
+  isLimitReached: boolean;
+  shouldWarn: boolean;
+  currentSession: {
+    startTime: number;
+    elapsedSeconds: number;
+  } | null;
+}
+
+export function useScreenTimeEnforcement() {
+  const { 
+    activeChildId, 
+    children, 
+    updateSessionTime,
+    endSession 
+  } = useParentalStore();
+  
+  const [status, setStatus] = useState<ScreenTimeStatus>({
+    isWithinSchedule: true,
+    remainingMinutes: 0,
+    isLimitReached: false,
+    shouldWarn: false,
+    currentSession: null,
+  });
+
+  const activeChild = children.find(c => c.id === activeChildId);
+
+  // Check if current time is within allowed schedule
+  const checkSchedule = useCallback((): boolean => {
+    if (!activeChild) return true;
+    
+    const settings = activeChild.settings as any;
+    if (!settings?.enforceSchedule || !settings?.schedules?.length) {
+      return true; // No schedule restrictions
+    }
+
+    const now = new Date();
+    const currentDay = now.getDay();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+
+    // Check if current time falls within any allowed schedule
+    return settings.schedules.some((schedule: any) => {
+      if (schedule.day !== currentDay) return false;
+      
+      const [startHour, startMin] = schedule.startTime.split(':').map(Number);
+      const [endHour, endMin] = schedule.endTime.split(':').map(Number);
+      
+      const startMinutes = startHour * 60 + startMin;
+      const endMinutes = endHour * 60 + endMin;
+      
+      return currentTime >= startMinutes && currentTime < endMinutes;
+    });
+  }, [activeChild]);
+
+  // Calculate remaining time
+  const calculateRemaining = useCallback((): number => {
+    if (!activeChild) return 0;
+    
+    const limitSeconds = activeChild.dailyTimeLimit * 60;
+    const usedSeconds = activeChild.totalTimeToday;
+    const remainingSeconds = Math.max(0, limitSeconds - usedSeconds);
+    
+    return Math.floor(remainingSeconds / 60);
+  }, [activeChild]);
+
+  // Update status every second
+  useEffect(() => {
+    if (!activeChild || !activeChildId) {
+      setStatus({
+        isWithinSchedule: true,
+        remainingMinutes: 0,
+        isLimitReached: false,
+        shouldWarn: false,
+        currentSession: null,
+      });
+      return;
+    }
+
+    const updateStatus = () => {
+      const isWithinSchedule = checkSchedule();
+      const remainingMinutes = calculateRemaining();
+      const isLimitReached = remainingMinutes <= 0;
+      const shouldWarn = remainingMinutes <= 5 && remainingMinutes > 0;
+
+      setStatus({
+        isWithinSchedule,
+        remainingMinutes,
+        isLimitReached,
+        shouldWarn,
+        currentSession: activeChild.sessionStartTime ? {
+          startTime: activeChild.sessionStartTime,
+          elapsedSeconds: Math.floor((Date.now() - activeChild.sessionStartTime) / 1000),
+        } : null,
+      });
+
+      // Update session time in store
+      const canContinue = updateSessionTime();
+      
+      // Show warnings
+      if (!isWithinSchedule) {
+        toast({
+          title: "Outside Allowed Hours",
+          description: "This time is outside the allowed schedule. Session will end soon.",
+          variant: "destructive",
+        });
+        setTimeout(() => endSession(), 3000);
+      } else if (isLimitReached && canContinue === false) {
+        toast({
+          title: "Time Limit Reached",
+          description: `${activeChild.name} has reached today's screen time limit.`,
+          variant: "destructive",
+        });
+        endSession();
+      } else if (shouldWarn) {
+        toast({
+          title: "Time Running Low",
+          description: `Only ${remainingMinutes} minutes remaining today!`,
+        });
+      }
+    };
+
+    updateStatus();
+    const interval = setInterval(updateStatus, 1000);
+
+    return () => clearInterval(interval);
+  }, [activeChild, activeChildId, checkSchedule, calculateRemaining, updateSessionTime, endSession]);
+
+  // Sync session to database
+  const syncSessionToDatabase = useCallback(async () => {
+    if (!activeChild || !activeChild.sessionStartTime) return;
+
+    const user = (await supabase.auth.getUser()).data.user;
+    if (!user) return;
+
+    const durationSeconds = Math.floor((Date.now() - activeChild.sessionStartTime) / 1000);
+
+    try {
+      await supabase.from('usage_sessions').insert({
+        user_id: user.id,
+        child_profile_id: activeChild.id,
+        session_start: new Date(activeChild.sessionStartTime).toISOString(),
+        session_end: new Date().toISOString(),
+        duration_seconds: durationSeconds,
+      });
+    } catch (error) {
+      console.error('Failed to sync session:', error);
+    }
+  }, [activeChild]);
+
+  // Sync when session ends
+  useEffect(() => {
+    return () => {
+      syncSessionToDatabase();
+    };
+  }, [syncSessionToDatabase]);
+
+  return {
+    status,
+    forceEndSession: () => {
+      syncSessionToDatabase();
+      endSession();
+    },
+  };
+}
