@@ -311,7 +311,11 @@ export default function StoryTime() {
         onClick={handleNextPage}
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => e.key === 'Enter' && handleNextPage(e as any)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            handleNextPage(e as unknown as React.MouseEvent)
+          }
+        }}
       >
         <div className="illustration text-9xl mb-8">{page.illustration}</div>
         <p className="text-3xl text-card-foreground text-center leading-relaxed">{page.text}</p>
