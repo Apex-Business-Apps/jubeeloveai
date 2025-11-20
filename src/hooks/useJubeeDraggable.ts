@@ -7,7 +7,7 @@
 
 import { useCallback, useRef, useEffect } from 'react'
 import { useJubeeStore } from '@/store/useJubeeStore'
-import { getContainerDimensions } from '@/core/jubee/JubeeDom'
+import { validatePosition, getContainerDimensions, calculateMaxBoundaries } from '@/core/jubee/JubeePositionManager'
 
 interface DragState {
   isDragging: boolean
@@ -22,8 +22,7 @@ interface DragState {
   lastTime: number
 }
 
-// Boundary constants to prevent edge clipping while allowing full viewport access
-const SAFE_MARGIN = 10 // Small margin to prevent edge clipping
+// Physics constants for smooth dragging
 const FRICTION = 0.94 // Friction coefficient for exponential decay (higher = less friction)
 const VELOCITY_THRESHOLD = 0.3 // Minimum velocity to continue momentum (px/frame)
 const MAX_VELOCITY = 50 // Cap maximum velocity to prevent extreme flicks
@@ -86,27 +85,9 @@ export function useJubeeDraggable(containerRef: React.RefObject<HTMLDivElement>)
     console.log('[Jubee Drag] Started with smooth momentum')
   }, [containerRef, setIsDragging])
 
-  const validateBoundaries = useCallback((bottom: number, right: number): { bottom: number; right: number } => {
-    const viewportHeight = window.innerHeight
-    const viewportWidth = window.innerWidth
-    const containerDims = getContainerDimensions()
-
-    // Calculate bounds to keep container fully visible within viewport
-    // Allow dragging to all edges with SAFE_MARGIN to prevent clipping
-    const minBottom = SAFE_MARGIN // Allow dragging to top of screen
-    const minRight = SAFE_MARGIN // Allow dragging to left edge
-    const maxBottom = viewportHeight - containerDims.height - SAFE_MARGIN // Prevent bottom overflow
-    const maxRight = viewportWidth - containerDims.width - SAFE_MARGIN // Prevent right overflow
-
-    // Additional NaN/Infinity guards with safe defaults
-    const safeBottom = Number.isFinite(bottom) ? bottom : 200
-    const safeRight = Number.isFinite(right) ? right : 100
-
-    // Clamp to viewport bounds - allowing FULL viewport dragging
-    return {
-      bottom: Math.max(minBottom, Math.min(maxBottom, safeBottom)),
-      right: Math.max(minRight, Math.min(maxRight, safeRight))
-    }
+  // Use centralized position validation
+  const validateBoundaries = useCallback((bottom: number, right: number) => {
+    return validatePosition({ bottom, right });
   }, [])
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
@@ -190,12 +171,8 @@ export function useJubeeDraggable(containerRef: React.RefObject<HTMLDivElement>)
     const newBottom = currentBottom - state.velocityY
     const newRight = currentRight - state.velocityX
     
-    // Get boundaries
-    const containerDims = getContainerDimensions()
-    const minBottom = SAFE_MARGIN
-    const minRight = SAFE_MARGIN
-    const maxBottom = viewportHeight - containerDims.height - SAFE_MARGIN
-    const maxRight = viewportWidth - containerDims.width - SAFE_MARGIN
+    // Get boundaries from centralized manager
+    const { minBottom, minRight, maxBottom, maxRight } = calculateMaxBoundaries()
     
     let finalBottom = newBottom
     let finalRight = newRight
