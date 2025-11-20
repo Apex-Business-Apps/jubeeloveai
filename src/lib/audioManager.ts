@@ -168,6 +168,47 @@ class AudioManager {
   }
 
   /**
+   * Pause currently playing audio
+   */
+  pauseAudio(): void {
+    if (this.currentAudio && !this.currentAudio.paused) {
+      this.currentAudio.pause();
+    }
+  }
+
+  /**
+   * Resume currently paused audio
+   */
+  resumeAudio(): void {
+    if (this.currentAudio && this.currentAudio.paused) {
+      this.currentAudio.play().catch(err => console.error('Error resuming audio:', err));
+    }
+  }
+
+  /**
+   * Set playback speed (0.5 to 2.0)
+   */
+  setPlaybackSpeed(speed: number): void {
+    if (this.currentAudio) {
+      this.currentAudio.playbackRate = Math.max(0.5, Math.min(2.0, speed));
+    }
+  }
+
+  /**
+   * Check if audio is currently playing
+   */
+  isPlaying(): boolean {
+    return this.currentAudio !== null && !this.currentAudio.paused;
+  }
+
+  /**
+   * Check if audio is paused
+   */
+  isPaused(): boolean {
+    return this.currentAudio !== null && this.currentAudio.paused;
+  }
+
+  /**
    * Play audio from URL or Blob
    */
   async playAudio(source: string | Blob, stopCurrent = true): Promise<void> {
