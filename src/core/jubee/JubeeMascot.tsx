@@ -21,9 +21,19 @@ import { Group, Mesh } from 'three'
 import { useJubeeStore } from '../../store/useJubeeStore'
 import * as THREE from 'three'
 
+interface PerformanceProfile {
+  quality: 'low' | 'medium' | 'high'
+  targetFPS: number
+  shadowsEnabled: boolean
+  particlesEnabled: boolean
+  geometrySegments: number
+  animationThrottle: number
+}
+
 interface JubeeProps {
   position?: [number, number, number]
   animation?: string
+  performanceProfile?: PerformanceProfile
 }
 
 // Constants moved outside component for performance
@@ -68,7 +78,7 @@ const getJubeeColors = (gender: 'male' | 'female') => ({
 const tempVector = new THREE.Vector3()
 const targetScale = new THREE.Vector3()
 
-export function JubeeMascot({ position = [0, 0, 0], animation = 'idle' }: JubeeProps) {
+export function JubeeMascot({ position = [0, 0, 0], animation = 'idle', performanceProfile }: JubeeProps) {
   const group = useRef<Group>(null)
   const bodyRef = useRef<Mesh>(null)
   const headRef = useRef<Mesh>(null)
@@ -84,8 +94,9 @@ export function JubeeMascot({ position = [0, 0, 0], animation = 'idle' }: JubeeP
   const [showClickFeedback, setShowClickFeedback] = useState(false)
   const { gender, speechText, currentMood, updatePosition, speak, triggerAnimation, cleanup } = useJubeeStore()
 
-  // Memoize current colors from design system
+  // Memoize current colors and performance settings from design system
   const currentColors = useMemo(() => getJubeeColors(gender), [gender])
+  const segments = performanceProfile?.geometrySegments || 32 // Adaptive geometry quality
   
   // Dynamic facial expressions based on mood
   const faceExpression = useMemo(() => {
@@ -246,13 +257,14 @@ export function JubeeMascot({ position = [0, 0, 0], animation = 'idle' }: JubeeP
   }
 
   useFrame((state) => {
-    if (!group.current) {
-      console.warn('[Jubee] Group ref is null, skipping frame')
-      return
-    }
+    if (!group.current) return
 
     try {
       const time = state.clock.elapsedTime
+      
+      // Frame skip for performance on low-end devices
+      const shouldSkipFrame = performanceProfile?.quality === 'low' && state.frameloop !== 'never'
+      if (shouldSkipFrame && Math.floor(time * 60) % 2 === 0) return
     
     // Blinking animation - blink every 3-5 seconds
     if (time - blinkTime > 3 + Math.random() * 2) {
@@ -377,7 +389,7 @@ export function JubeeMascot({ position = [0, 0, 0], animation = 'idle' }: JubeeP
 
       {/* Body - large sphere */}
       <mesh ref={bodyRef} position={[0, 0, 0]} castShadow receiveShadow>
-        <sphereGeometry args={[0.5, 64, 64]} />
+        <sphereGeometry args={[0.5, segments, segments]} />
         <meshStandardMaterial
           color={currentColors.body}
           roughness={0.2}
@@ -389,7 +401,7 @@ export function JubeeMascot({ position = [0, 0, 0], animation = 'idle' }: JubeeP
 
       {/* Black stripes on body */}
       <mesh position={[0, 0.15, 0]} castShadow>
-        <sphereGeometry args={[0.51, 64, 64, 0, Math.PI * 2, 0.7, 0.3]} />
+        <sphereGeometry args={[0.51, segments, segments, 0, Math.PI * 2, 0.7, 0.3]} />
         <meshStandardMaterial 
           color={currentColors.stripe}
           roughness={0.3}
@@ -397,7 +409,7 @@ export function JubeeMascot({ position = [0, 0, 0], animation = 'idle' }: JubeeP
         />
       </mesh>
       <mesh position={[0, -0.15, 0]} castShadow>
-        <sphereGeometry args={[0.51, 64, 64, 0, Math.PI * 2, 1.3, 0.3]} />
+        <sphereGeometry args={[0.51, segments, segments, 0, Math.PI * 2, 1.3, 0.3]} />
         <meshStandardMaterial 
           color={currentColors.stripe}
           roughness={0.3}
@@ -407,7 +419,7 @@ export function JubeeMascot({ position = [0, 0, 0], animation = 'idle' }: JubeeP
 
       {/* Accent stripe (gender-specific color) */}
       <mesh position={[0, -0.3, 0]} castShadow>
-        <sphereGeometry args={[0.52, 64, 64, 0, Math.PI * 2, 1.6, 0.2]} />
+        <sphereGeometry args={[0.52, segments, segments, 0, Math.PI * 2, 1.6, 0.2]} />
         <meshStandardMaterial 
           color={currentColors.accentDark}
           roughness={0.2}
@@ -419,7 +431,7 @@ export function JubeeMascot({ position = [0, 0, 0], animation = 'idle' }: JubeeP
 
       {/* Head - medium sphere */}
       <mesh ref={headRef} position={[0, 0.65, 0]} castShadow receiveShadow>
-        <sphereGeometry args={[0.35, 64, 64]} />
+        <sphereGeometry args={[0.35, segments, segments]} />
         <meshStandardMaterial
           color={currentColors.body}
           roughness={0.2}

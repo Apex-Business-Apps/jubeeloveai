@@ -1,16 +1,13 @@
 import { Suspense, useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Canvas } from '@react-three/fiber';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { motion, useSpring } from 'framer-motion';
-import { JubeeMascot } from './core/jubee/JubeeMascot';
 import { useGameStore } from './store/useGameStore';
 import { useJubeeStore } from './store/useJubeeStore';
 import { useParentalStore } from './store/useParentalStore';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { JubeeErrorBoundary } from './components/JubeeErrorBoundary';
 import { SEO } from './components/SEO';
 import { LoadingScreen } from './components/LoadingScreen';
 import { JubeePersonalization } from './components/common/JubeePersonalization';
@@ -30,9 +27,9 @@ import { useJubeeVisibilityMonitor } from './hooks/useJubeeVisibilityMonitor';
 import { OnboardingTutorial } from './components/OnboardingTutorial';
 import { useOnboardingStore } from './store/useOnboardingStore';
 import { useSmartAudioPreloader } from './hooks/useSmartAudioPreloader';
-import { logger } from './lib/logger';
 import { AppRoutes } from './components/AppRoutes';
 import { Navigation } from './components/Navigation';
+import { JubeeCanvas } from './components/JubeeCanvas';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -193,54 +190,10 @@ export default function App() {
                   pointerEvents: 'auto'
                 }}
               >
-                <JubeeErrorBoundary>
-                  <Canvas
-                    key={`jubee-canvas-${isVisible}`}
-                    camera={{ position: [0, 0, 6], fov: 45 }}
-                    shadows
-                    style={{ 
-                      background: 'transparent',
-                      width: '100%',
-                      height: '100%',
-                      display: 'block'
-                    }}
-                    gl={{
-                      antialias: true,
-                      alpha: true,
-                      powerPreference: "high-performance"
-                    }}
-                    onCreated={({ gl }) => {
-                      logger.dev('[Jubee] Canvas created via Portal with dimensions: 400x450');
-                      gl.setClearColor('#000000', 0);
-                      gl.setSize(400, 450);
-                    }}
-                  >
-                    <ambientLight intensity={1.2} />
-                    <directionalLight
-                      position={[5, 5, 5]}
-                      intensity={1.5}
-                      castShadow
-                      shadow-mapSize-width={2048}
-                      shadow-mapSize-height={2048}
-                    />
-                    <directionalLight
-                      position={[-5, 3, -5]}
-                      intensity={0.8}
-                      color="#ffd700"
-                    />
-                    <hemisphereLight
-                      color="#87CEEB"
-                      groundColor="#FFD700"
-                      intensity={0.6}
-                    />
-                    <Suspense fallback={null}>
-                      <JubeeMascot
-                        position={[jubeePosition.x, jubeePosition.y, jubeePosition.z]}
-                        animation={jubeeAnimation}
-                      />
-                    </Suspense>
-                  </Canvas>
-                </JubeeErrorBoundary>
+                <JubeeCanvas 
+                  jubeePosition={jubeePosition} 
+                  jubeeAnimation={jubeeAnimation} 
+                />
               </motion.div>,
               document.body
             )}
