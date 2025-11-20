@@ -31,6 +31,7 @@ import { useSystemHealthMonitor } from './hooks/useSystemHealthMonitor';
 import { AppRoutes } from './components/AppRoutes';
 import { Navigation } from './components/Navigation';
 import { JubeeCanvas } from './components/JubeeCanvas';
+import { validatePosition } from './core/jubee/JubeePositionManager';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -107,6 +108,38 @@ export default function App() {
   useJubeeCollision(jubeeContainerRef);
   useJubeeDraggable(jubeeContainerRef);
   const { needsRecovery, forceReset } = useJubeeVisibilityMonitor(jubeeContainerRef);
+
+  // Revalidate position on viewport resize (especially when crossing breakpoints)
+  useEffect(() => {
+    let resizeTimeout: ReturnType<typeof setTimeout>;
+    let previousBreakpoint = window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tablet' : 'desktop';
+    
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        const currentBreakpoint = window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tablet' : 'desktop';
+        
+        // If breakpoint changed, revalidate position to prevent clipping
+        if (currentBreakpoint !== previousBreakpoint) {
+          console.log('[Jubee Resize] Breakpoint changed:', previousBreakpoint, '->', currentBreakpoint);
+          const validated = validatePosition(containerPosition);
+          
+          if (validated.bottom !== containerPosition.bottom || validated.right !== containerPosition.right) {
+            console.log('[Jubee Resize] Position adjusted for new breakpoint:', validated);
+            useJubeeStore.getState().setContainerPosition(validated);
+          }
+          
+          previousBreakpoint = currentBreakpoint;
+        }
+      }, 300);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimeout);
+    };
+  }, [containerPosition]);
 
   useEffect(() => {
     const updateThemeBasedOnTime = () => {
@@ -237,8 +270,9 @@ export default function App() {
                   position: 'fixed',
                   bottom: isDragging ? containerPosition.bottom : springBottom,
                   right: isDragging ? containerPosition.right : springRight,
-                  width: '400px',
-                  height: '450px',
+                  // Responsive dimensions matching JubeePositionManager breakpoints
+                  width: window.innerWidth < 768 ? '300px' : window.innerWidth < 1024 ? '350px' : '400px',
+                  height: window.innerWidth < 768 ? '360px' : window.innerWidth < 1024 ? '400px' : '450px',
                   zIndex: 10001,
                   touchAction: 'none',
                   pointerEvents: 'auto'
