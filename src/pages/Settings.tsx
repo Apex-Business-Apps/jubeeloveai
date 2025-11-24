@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Settings as SettingsIcon, Volume2, VolumeX, Sun, Moon, Sunrise, Sunset, Shield, Download, Play, GraduationCap } from 'lucide-react';
+import { Settings as SettingsIcon, Volume2, VolumeX, Sun, Moon, Sunrise, Sunset, Shield, Download, Play, GraduationCap, Palette } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
@@ -293,6 +293,27 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Style Guide */}
+        <Card className="border-4 border-primary/30">
+          <CardHeader>
+            <CardTitle className="text-primary flex items-center gap-2">
+              <Palette className="w-6 h-6" />
+              Style Guide
+            </CardTitle>
+            <CardDescription className="text-primary">UI components documentation and design system</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              onClick={() => navigate('/style-guide')}
+              variant="outline"
+              size="lg"
+              className="w-full"
+            >
+              View Style Guide
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Install App */}
         <Card className="border-4 border-primary/30">
