@@ -30,6 +30,7 @@ const PerformanceMonitor = lazy(() => import('../pages/PerformanceMonitor'));
 const AuthPage = lazy(() => import('../pages/Auth'));
 const ParentHub = lazy(() => import('../pages/ParentHub'));
 const ConversationAnalytics = lazy(() => import('../pages/ConversationAnalytics'));
+const StyleGuide = lazy(() => import('../pages/StyleGuide'));
 const HomePage = lazy(() => import('../pages/Home'));
 const GamesMenu = lazy(() => import('../pages/GamesMenu'));
 
@@ -58,6 +59,7 @@ export function AppRoutes() {
       <Route path="/install" element={<InstallPage />} />
       <Route path="/parental-controls" element={<ParentalControls />} />
       <Route path="/performance-monitor" element={<PerformanceMonitor />} />
+      <Route path="/style-guide" element={<Suspense fallback={<SettingsSkeleton />}><StyleGuide /></Suspense>} />
       
       {/* Auth-gated parent routes */}
       <Route path="/parent" element={<ProtectedRoute><ParentHub /></ProtectedRoute>} />
