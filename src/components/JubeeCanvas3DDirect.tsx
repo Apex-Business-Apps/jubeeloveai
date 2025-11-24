@@ -12,11 +12,9 @@
  * - More reliable state synchronization
  */
 
-import { useEffect, useRef, memo, useCallback } from 'react';
+import { useEffect, useRef, memo } from 'react';
 import * as THREE from 'three';
 import { useJubeeStore } from '@/store/useJubeeStore';
-import { useJubeeDraggable } from '@/hooks/useJubeeDraggable';
-import { useJubeeCollision } from '@/hooks/useJubeeCollision';
 import { logger } from '@/lib/logger';
 
 interface JubeeCanvas3DDirectProps {
@@ -39,10 +37,6 @@ function JubeeCanvas3DDirectComponent({ className }: JubeeCanvas3DDirectProps) {
     gender,
     currentMood 
   } = useJubeeStore();
-  
-  // Enable dragging and collision detection
-  useJubeeDraggable(containerRef);
-  useJubeeCollision(containerRef);
 
   // Initialize Three.js scene
   useEffect(() => {
