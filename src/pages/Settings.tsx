@@ -84,10 +84,14 @@ export default function SettingsPage() {
         title={`${t('app.title')} - ${t('settings.title')}`}
         description={t('settings.title')}
       />
-      <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
+      <div 
+        className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6"
+        role="main"
+        aria-label="Settings page"
+      >
         <header className="text-center mb-8 pt-4">
           <h1 className="text-4xl md:text-5xl font-bold text-primary mb-2 flex items-center justify-center gap-3">
-            <SettingsIcon className="w-10 h-10" />
+            <SettingsIcon className="w-10 h-10" aria-hidden="true" />
             {t('settings.title')}
           </h1>
           <p className="text-primary">

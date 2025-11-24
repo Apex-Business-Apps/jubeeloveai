@@ -33,7 +33,11 @@ export default function HomePage() {
         title="Jubee Love - Home"
         description="Welcome to Jubee's World! Choose from writing practice, shape recognition, and more fun learning activities."
       />
-      <div className="home-page w-full">
+      <div 
+        className="home-page w-full" 
+        role="main"
+        aria-label="Home page - Choose an activity"
+      >
         {showInstallBanner && (
           <div className="mb-4 animate-in slide-in-from-top duration-500">
             <Card className="border-2 border-primary/30 bg-card/95 backdrop-blur-sm">
@@ -67,14 +71,20 @@ export default function HomePage() {
           </div>
         )}
         
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-3 sm:mb-4 text-primary leading-tight">
-          Welcome to Jubee's World!
-        </h1>
-        <p className="text-center text-foreground/90 mb-6 sm:mb-8 px-4 max-w-2xl mx-auto text-sm sm:text-base md:text-lg leading-relaxed">
-          Learn and play with Jubee the friendly bee! Choose an activity below to start your educational adventure.
-        </p>
+        <header className="text-center mb-6 sm:mb-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 text-primary leading-tight">
+            Welcome to Jubee's World!
+          </h1>
+          <p className="text-foreground/90 px-4 max-w-2xl mx-auto text-sm sm:text-base md:text-lg leading-relaxed">
+            Learn and play with Jubee the friendly bee! Choose an activity below to start your educational adventure.
+          </p>
+        </header>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto">
+        <div 
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto"
+          role="list"
+          aria-label="Available learning activities"
+        >
           <GameCard
             title="Writing Practice"
             icon="✏️"
@@ -145,25 +155,39 @@ function GameCard({ title, icon, path, description }: GameCardProps) {
     navigate(path);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleClick();
+    }
+  };
+
   return (
     <button
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       className="
         game-card group
         focus:outline-none 
         focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2
         min-h-[160px] sm:min-h-[180px]
+        transition-all duration-300
       "
-      aria-label={`Start ${title} activity`}
+      aria-label={`Start ${title} - ${description}`}
+      role="listitem"
     >
       <div 
-        className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 transition-transform group-hover:scale-110 text-primary flex items-center justify-center" 
+        className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 transition-transform duration-300 group-hover:scale-110 group-focus-visible:scale-110 text-primary flex items-center justify-center" 
         aria-hidden="true"
       >
         {typeof icon === 'string' ? <span className="text-5xl sm:text-6xl">{icon}</span> : icon}
       </div>
-      <span className="text-xl sm:text-2xl md:text-3xl mt-3 sm:mt-4 font-bold text-primary leading-tight">{title}</span>
-      <p className="text-xs sm:text-sm text-foreground/80 mt-2 px-2 sm:px-4 leading-relaxed">{description}</p>
+      <span className="text-xl sm:text-2xl md:text-3xl mt-3 sm:mt-4 font-bold text-primary leading-tight">
+        {title}
+      </span>
+      <p className="text-xs sm:text-sm text-foreground/80 mt-2 px-2 sm:px-4 leading-relaxed">
+        {description}
+      </p>
     </button>
   );
 }
