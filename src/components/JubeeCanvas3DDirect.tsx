@@ -388,11 +388,11 @@ function JubeeCanvas3DDirectComponent({ className }: JubeeCanvas3DDirectProps) {
  * Build the Jubee 3D model
  */
 function buildJubeeModel(group: THREE.Group, gender: 'male' | 'female') {
-  // Get colors based on gender
+  // Get colors based on gender - bright, vibrant, realistic bee colors
   const colors = {
-    body: gender === 'male' ? 0xFFD700 : 0xFFB6D9,
-    stripe: 0x000000,
-    accent: gender === 'male' ? 0x4A9FFF : 0xFF69B4,
+    body: gender === 'male' ? 0xFFCC00 : 0xFFB3E6,  // Bright golden yellow / bright pink
+    stripe: 0x1A1A1A,  // Soft black for better contrast
+    accent: gender === 'male' ? 0x00BFFF : 0xFF1493,  // Bright deep sky blue / deep pink
     eye: 0xFFFFFF,
     pupil: 0x000000,
   };
@@ -402,7 +402,9 @@ function buildJubeeModel(group: THREE.Group, gender: 'male' | 'female') {
   bodyGeometry.scale(1, 1.3, 0.9);
   const bodyMaterial = new THREE.MeshPhongMaterial({ 
     color: colors.body,
-    shininess: 30,
+    shininess: 60,
+    emissive: colors.body,
+    emissiveIntensity: 0.15,
   });
   const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
   body.name = 'body';
@@ -459,10 +461,13 @@ function buildJubeeModel(group: THREE.Group, gender: 'male' | 'female') {
   const wingGeometry = new THREE.SphereGeometry(0.6, 16, 16);
   wingGeometry.scale(1.5, 0.8, 0.1);
   const wingMaterial = new THREE.MeshPhongMaterial({ 
-    color: 0xADD8E6,
+    color: 0xE0F7FF,  // Bright cyan-white for iridescent wings
     transparent: true,
-    opacity: 0.6,
+    opacity: 0.7,
     side: THREE.DoubleSide,
+    shininess: 100,
+    emissive: 0xCCF5FF,
+    emissiveIntensity: 0.2,
   });
 
   const leftWing = new THREE.Mesh(wingGeometry, wingMaterial);
