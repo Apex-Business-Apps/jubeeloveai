@@ -527,6 +527,14 @@ function updateJubeeAnimation(
   // Idle float animation
   group.position.y = Math.sin(time * 2) * 0.1;
 
+  // Gentle pulsing glow on body
+  const body = group.getObjectByName('body') as THREE.Mesh;
+  if (body && body.material instanceof THREE.MeshPhongMaterial) {
+    // Subtle sine wave pulse between 0.1 and 0.25 emissive intensity
+    const pulseIntensity = 0.15 + Math.sin(time * 1.5) * 0.05;
+    body.material.emissiveIntensity = pulseIntensity;
+  }
+
   // Wing flapping
   const leftWing = group.getObjectByName('leftWing');
   const rightWing = group.getObjectByName('rightWing');
