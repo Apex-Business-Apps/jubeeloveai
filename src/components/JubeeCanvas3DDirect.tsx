@@ -388,11 +388,11 @@ function JubeeCanvas3DDirectComponent({ className }: JubeeCanvas3DDirectProps) {
  * Build the Jubee 3D model
  */
 function buildJubeeModel(group: THREE.Group, gender: 'male' | 'female') {
-  // Get colors based on gender - bright, vibrant, realistic bee colors
+  // Get colors based on gender - ULTRA bright, vibrant, lively bee colors
   const colors = {
-    body: gender === 'male' ? 0xFFCC00 : 0xFFB3E6,  // Bright golden yellow / bright pink
-    stripe: 0x1A1A1A,  // Soft black for better contrast
-    accent: gender === 'male' ? 0x00BFFF : 0xFF1493,  // Bright deep sky blue / deep pink
+    body: gender === 'male' ? 0xFFD700 : 0xFF69B4,  // Pure gold / hot pink
+    stripe: 0x2C2C2C,  // Dark charcoal for strong contrast
+    accent: gender === 'male' ? 0x00FFFF : 0xFF1493,  // Cyan / deep pink
     eye: 0xFFFFFF,
     pupil: 0x000000,
   };
@@ -402,9 +402,10 @@ function buildJubeeModel(group: THREE.Group, gender: 'male' | 'female') {
   bodyGeometry.scale(1, 1.3, 0.9);
   const bodyMaterial = new THREE.MeshPhongMaterial({ 
     color: colors.body,
-    shininess: 60,
+    shininess: 100,
     emissive: colors.body,
-    emissiveIntensity: 0.15,
+    emissiveIntensity: 0.3,
+    specular: 0xFFFFFF,
   });
   const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
   body.name = 'body';
@@ -423,7 +424,13 @@ function buildJubeeModel(group: THREE.Group, gender: 'male' | 'female') {
 
   // Head
   const headGeometry = new THREE.SphereGeometry(0.8, 32, 32);
-  const headMaterial = new THREE.MeshPhongMaterial({ color: colors.body });
+  const headMaterial = new THREE.MeshPhongMaterial({ 
+    color: colors.body,
+    shininess: 100,
+    emissive: colors.body,
+    emissiveIntensity: 0.25,
+    specular: 0xFFFFFF,
+  });
   const head = new THREE.Mesh(headGeometry, headMaterial);
   head.position.y = 1.5;
   head.name = 'head';
@@ -530,8 +537,8 @@ function updateJubeeAnimation(
   // Gentle pulsing glow on body
   const body = group.getObjectByName('body') as THREE.Mesh;
   if (body && body.material instanceof THREE.MeshPhongMaterial) {
-    // Subtle sine wave pulse between 0.1 and 0.25 emissive intensity
-    const pulseIntensity = 0.15 + Math.sin(time * 1.5) * 0.05;
+    // Lively sine wave pulse between 0.25 and 0.4 emissive intensity
+    const pulseIntensity = 0.3 + Math.sin(time * 1.5) * 0.1;
     body.material.emissiveIntensity = pulseIntensity;
   }
 
