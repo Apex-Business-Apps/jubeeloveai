@@ -9,6 +9,7 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useJubeeStore } from '@/store/useJubeeStore';
+import { playMoodSound } from '@/lib/jubeeAudioEffects';
 import { getViewportBounds } from '@/core/jubee/JubeeDom';
 
 /**
@@ -175,11 +176,13 @@ export function useJubeePageTransition() {
         console.log('[Jubee Transition] Fly animation complete');
         transitionStateRef.current = null;
         
-        // Trigger contextual animation when landing
-        const { animation } = getRouteMood(location.pathname);
+        // Trigger contextual animation and sound when landing
+        const { mood: landingMood, animation } = getRouteMood(location.pathname);
         if (animation) {
           triggerAnimation(animation);
         }
+        // Play mood-appropriate sound effect
+        playMoodSound(landingMood);
       }
     };
 
