@@ -56,8 +56,9 @@ function captureSnapshot(event: string, containerRef: React.RefObject<HTMLDivEle
       isDragging: store.isDragging
     },
     dom: {
-      containerExists: !!container,
-      canvasExists: !!container?.querySelector('canvas'),
+      // FIXED: Check if container exists AND is in live DOM tree
+      containerExists: !!(container && document.contains(container)),
+      canvasExists: !!(container && document.contains(container) && container.querySelector('canvas')),
       containerRect: container?.getBoundingClientRect(),
       containerStyles: container ? {
         display: window.getComputedStyle(container).display,
@@ -177,7 +178,9 @@ export function useJubeeLifecycleDiagnostics(containerRef: React.RefObject<HTMLD
       const issues: string[] = []
       
       if (snapshot.state.isVisible && !snapshot.dom.containerExists) {
-        issues.push('CRITICAL: isVisible true but container does not exist in DOM')
+        issues.push('CRITICAL: isVisible true but container does not exist in live DOM tree')
+        // Attempt immediate recovery
+        console.error('[DIAGNOSTIC] Jubee container missing from DOM - attempting recovery')
       }
       
       if (snapshot.dom.containerExists && snapshot.dom.containerStyles?.display === 'none') {
