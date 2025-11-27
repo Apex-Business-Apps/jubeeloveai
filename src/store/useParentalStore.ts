@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { logger } from '@/lib/logger';
 
 export interface Schedule {
   day: number; // 0-6 (Sunday-Saturday)
@@ -85,6 +86,22 @@ export const useParentalStore = create<ParentalState>()(
       isParentMode: false,
 
       addChild: (childData) => set((state) => {
+        // Guardrail: Validate child data
+        if (!childData.name || typeof childData.name !== 'string') {
+          logger.error('[ParentalStore] Invalid child name, cannot add child')
+          return
+        }
+        
+        if (!Number.isFinite(childData.age) || childData.age < 0 || childData.age > 18) {
+          logger.error('[ParentalStore] Invalid child age, cannot add child')
+          return
+        }
+        
+        if (!Number.isFinite(childData.dailyTimeLimit) || childData.dailyTimeLimit < 0) {
+          logger.warn('[ParentalStore] Invalid time limit, setting to default 60 minutes')
+          childData.dailyTimeLimit = 60
+        }
+        
         const newChild: ChildProfile = {
           ...childData,
           id: `child-${Date.now()}`,
@@ -96,14 +113,42 @@ export const useParentalStore = create<ParentalState>()(
             'write', 'shapes', 'stories', 'games', 'progress', 'stickers'
           ],
         };
+        
+        // Guardrail: Limit maximum children
+        if (state.children.length >= 10) {
+          logger.error('[ParentalStore] Maximum 10 children allowed')
+          return
+        }
+        
         state.children.push(newChild);
+        logger.dev(`[ParentalStore] Child added: ${newChild.name}`)
       }),
 
       updateChild: (id, updates) => set((state) => {
         const child = state.children.find((c) => c.id === id);
-        if (child) {
-          Object.assign(child, updates);
+        if (!child) {
+          logger.warn(`[ParentalStore] Child not found: ${id}`)
+          return
         }
+        
+        // Guardrail: Validate updates
+        if (updates.age !== undefined && (!Number.isFinite(updates.age) || updates.age < 0 || updates.age > 18)) {
+          logger.error('[ParentalStore] Invalid age update, ignoring')
+          delete updates.age
+        }
+        
+        if (updates.dailyTimeLimit !== undefined && (!Number.isFinite(updates.dailyTimeLimit) || updates.dailyTimeLimit < 0)) {
+          logger.error('[ParentalStore] Invalid time limit update, ignoring')
+          delete updates.dailyTimeLimit
+        }
+        
+        if (updates.totalTimeToday !== undefined && (!Number.isFinite(updates.totalTimeToday) || updates.totalTimeToday < 0)) {
+          logger.error('[ParentalStore] Invalid time today update, ignoring')
+          delete updates.totalTimeToday
+        }
+        
+        Object.assign(child, updates);
+        logger.dev(`[ParentalStore] Child updated: ${child.name}`)
       }),
 
       deleteChild: (id) => set((state) => {
@@ -119,17 +164,29 @@ export const useParentalStore = create<ParentalState>()(
 
       startSession: (childId) => set((state) => {
         const child = state.children.find((c) => c.id === childId);
-        if (child) {
-          child.sessionStartTime = Date.now();
-          
-          // Reset daily time if it's a new day
-          const today = new Date().toDateString();
-          if (child.lastResetDate !== today) {
-            child.totalTimeToday = 0;
-            child.lastResetDate = today;
-          }
+        if (!child) {
+          logger.error(`[ParentalStore] Cannot start session, child not found: ${childId}`)
+          return
         }
+        
+        // Guardrail: Validate time data
+        if (!Number.isFinite(child.totalTimeToday) || child.totalTimeToday < 0) {
+          logger.warn('[ParentalStore] Invalid totalTimeToday, resetting to 0')
+          child.totalTimeToday = 0
+        }
+        
+        child.sessionStartTime = Date.now();
+        
+        // Reset daily time if it's a new day
+        const today = new Date().toDateString();
+        if (child.lastResetDate !== today) {
+          logger.dev(`[ParentalStore] New day detected for ${child.name}, resetting daily time`)
+          child.totalTimeToday = 0;
+          child.lastResetDate = today;
+        }
+        
         state.activeChildId = childId;
+        logger.dev(`[ParentalStore] Session started for ${child.name}`)
       }),
 
       endSession: () => set((state) => {
@@ -192,6 +249,63 @@ export const useParentalStore = create<ParentalState>()(
         };
       },
     })),
-    { name: 'jubeelove-parental-storage' }
+    { 
+      name: 'jubeelove-parental-storage',
+      version: 1, // Version for future migrations
+      // Enhanced validation on rehydration
+      onRehydrateStorage: () => (state) => {
+        if (!state) return
+        
+        // Validate children array
+        if (!Array.isArray(state.children)) {
+          logger.error('[ParentalStore] Invalid children array on rehydration, resetting')
+          state.children = []
+        }
+        
+        // Validate and clean up each child profile
+        state.children = state.children.filter(child => {
+          if (!child.id || !child.name) {
+            logger.warn('[ParentalStore] Invalid child profile found, removing')
+            return false
+          }
+          
+          // Fix invalid time values
+          if (!Number.isFinite(child.totalTimeToday) || child.totalTimeToday < 0) {
+            logger.warn(`[ParentalStore] Invalid time for ${child.name}, resetting to 0`)
+            child.totalTimeToday = 0
+          }
+          
+          if (!Number.isFinite(child.dailyTimeLimit) || child.dailyTimeLimit < 0) {
+            logger.warn(`[ParentalStore] Invalid time limit for ${child.name}, setting to 60`)
+            child.dailyTimeLimit = 60
+          }
+          
+          // Ensure arrays exist
+          if (!Array.isArray(child.allowedActivities)) {
+            logger.warn(`[ParentalStore] Invalid activities for ${child.name}, setting defaults`)
+            child.allowedActivities = ['write', 'shapes', 'stories', 'games', 'progress', 'stickers']
+          }
+          
+          return true
+        })
+        
+        // Validate settings
+        if (!state.settings || typeof state.settings !== 'object') {
+          logger.warn('[ParentalStore] Invalid settings on rehydration, using defaults')
+          state.settings = DEFAULT_SETTINGS
+        } else {
+          // Ensure all required settings fields exist
+          state.settings = { ...DEFAULT_SETTINGS, ...state.settings }
+        }
+        
+        // Validate active child ID
+        if (state.activeChildId && !state.children.find(c => c.id === state.activeChildId)) {
+          logger.warn('[ParentalStore] Active child ID invalid, clearing')
+          state.activeChildId = null
+        }
+        
+        logger.dev('[ParentalStore] State rehydrated and validated successfully')
+      }
+    }
   )
 );
