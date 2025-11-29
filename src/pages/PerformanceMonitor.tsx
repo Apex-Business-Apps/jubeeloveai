@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, AlertTriangle, CheckCircle, FlaskConical } from 'lucide-react';
 import { runProductionBatteryTest } from '@/test/productionBatteryTest';
-import { parentJourneyVerifier } from '@/test/parentJourneyVerification';
 import { useToast } from '@/hooks/use-toast';
 
 export default function PerformanceMonitor() {
@@ -67,6 +66,8 @@ export default function PerformanceMonitor() {
   const handleRunParentJourney = async () => {
     setIsRunningTest(true);
     try {
+      // Lazy load the verifier to avoid circular dependency
+      const { parentJourneyVerifier } = await import('@/test/parentJourneyVerification');
       const report = await parentJourneyVerifier.runCompleteJourney();
       console.log('\n' + parentJourneyVerifier.getDetailedReport());
       
