@@ -7,6 +7,7 @@ import { runMigrations } from "./lib/storageVersion";
 import { logger } from "./lib/logger";
 import { initializeGlobalErrorHandlers } from "./lib/globalErrorHandlers";
 import { initSentry } from "./lib/sentry";
+import "./performance/verifyParentJourneyClient"; // Load console commands
 
 // Initialize Sentry for error tracking
 initSentry();

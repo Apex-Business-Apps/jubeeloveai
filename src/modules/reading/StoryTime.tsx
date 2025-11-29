@@ -21,6 +21,7 @@ const StoryCard = memo(({
   onSelect: (story: Story) => void;
 }) => (
   <button
+    data-testid="story-card"
     onClick={() => onSelect(story)}
     className="story-card p-8 rounded-3xl transform hover:scale-105 transition-all duration-300 cursor-pointer border-4 border-game-accent active:scale-95 relative"
     style={{
@@ -416,12 +417,13 @@ export default function StoryTime() {
             }}
           />
         </div>
-        <p className="text-center text-xl text-game-neutral">
+        <p data-testid="page-number" className="text-center text-xl text-game-neutral">
           Page {currentPage + 1} of {selectedStory.pages.length}
         </p>
       </div>
 
       <div
+        data-testid="story-text"
         className="story-page p-12 rounded-3xl mb-8 bg-card border-4 border-game-accent flex flex-col items-center justify-center cursor-pointer active:scale-98 transition-transform"
         style={{
           boxShadow: 'var(--shadow-accent)',

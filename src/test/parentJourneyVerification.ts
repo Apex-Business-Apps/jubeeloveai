@@ -8,7 +8,7 @@
 
 import html2canvas from 'html2canvas';
 
-type VerificationResult = {
+export type VerificationResult = {
   step: string;
   passed: boolean;
   evidence: string;
@@ -17,7 +17,7 @@ type VerificationResult = {
   screenshot?: string; // Base64 data URL
 };
 
-type JourneyReport = {
+export type JourneyReport = {
   testName: string;
   startTime: number;
   endTime: number;
@@ -28,6 +28,10 @@ type JourneyReport = {
   overallPass: boolean;
   screenshots: string[]; // Array of base64 data URLs
 };
+
+export type JourneyStep = VerificationResult; // Alias for external consumers
+
+export type ParentJourneyResult = JourneyReport; // Alias for external consumers
 
 type ScreenshotOptions = {
   captureScreenshots: boolean;
