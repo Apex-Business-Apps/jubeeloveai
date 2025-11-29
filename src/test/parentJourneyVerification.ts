@@ -3,17 +3,21 @@
  * 
  * Programmatically verifies the complete parent user journey with detailed evidence logging.
  * Can be run directly in the browser console or integrated into system health checks.
+ * Includes screenshot capture at each step for visual evidence.
  */
 
-interface VerificationResult {
+import html2canvas from 'html2canvas';
+
+type VerificationResult = {
   step: string;
   passed: boolean;
   evidence: string;
   timestamp: number;
   error?: string;
-}
+  screenshot?: string; // Base64 data URL
+};
 
-interface JourneyReport {
+type JourneyReport = {
   testName: string;
   startTime: number;
   endTime: number;
@@ -22,25 +26,142 @@ interface JourneyReport {
   failedSteps: number;
   results: VerificationResult[];
   overallPass: boolean;
-}
+  screenshots: string[]; // Array of base64 data URLs
+};
+
+type ScreenshotOptions = {
+  captureScreenshots: boolean;
+  screenshotQuality: number; // 0-1
+};
 
 class ParentJourneyVerifier {
   private results: VerificationResult[] = [];
   private startTime: number = 0;
+  private screenshots: string[] = [];
+  private captureScreenshots: boolean = true;
+  private screenshotQuality: number = 0.8;
 
-  private log(step: string, passed: boolean, evidence: string, error?: string) {
+  /**
+   * Capture screenshot of current page state
+   */
+  private async captureScreenshot(stepName: string): Promise<string | undefined> {
+    if (!this.captureScreenshots) return undefined;
+
+    try {
+      const canvas = await html2canvas(document.body, {
+        allowTaint: true,
+        useCORS: true,
+        logging: false,
+        scale: 1,
+        windowWidth: window.innerWidth,
+        windowHeight: window.innerHeight,
+      });
+
+      const dataUrl = canvas.toDataURL('image/jpeg', this.screenshotQuality);
+      this.screenshots.push(dataUrl);
+      
+      console.log(`📸 Screenshot captured for: ${stepName}`);
+      return dataUrl;
+    } catch (error) {
+      console.warn(`Failed to capture screenshot for ${stepName}:`, error);
+      return undefined;
+    }
+  }
+
+  private async log(step: string, passed: boolean, evidence: string, error?: string, captureScreenshot: boolean = true) {
+    // Capture screenshot before logging
+    let screenshot: string | undefined;
+    if (captureScreenshot && this.captureScreenshots) {
+      screenshot = await this.captureScreenshot(step);
+    }
+
     const result: VerificationResult = {
       step,
       passed,
       evidence,
       timestamp: Date.now(),
       error,
+      screenshot,
     };
     this.results.push(result);
     
     const emoji = passed ? '✅' : '❌';
     console.log(`${emoji} ${step}: ${evidence}`);
     if (error) console.error(`   Error: ${error}`);
+    if (screenshot) console.log(`   📸 Screenshot captured`);
+  }
+
+  /**
+   * Configure screenshot capture options
+   */
+  setScreenshotOptions(options: Partial<ScreenshotOptions>) {
+    if (options.captureScreenshots !== undefined) {
+      this.captureScreenshots = options.captureScreenshots;
+    }
+    if (options.screenshotQuality !== undefined) {
+      this.screenshotQuality = Math.max(0, Math.min(1, options.screenshotQuality));
+    }
+  }
+
+  /**
+   * Download all screenshots as a zip file
+   */
+  async downloadScreenshots() {
+    if (this.screenshots.length === 0) {
+      console.warn('No screenshots to download');
+      return;
+    }
+
+    // Create download links for each screenshot
+    this.screenshots.forEach((dataUrl, index) => {
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `journey-step-${index + 1}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    console.log(`✅ Downloaded ${this.screenshots.length} screenshots`);
+  }
+
+  /**
+   * View screenshots in new tabs
+   */
+  viewScreenshots() {
+    if (this.screenshots.length === 0) {
+      console.warn('No screenshots to view');
+      return;
+    }
+
+    this.screenshots.forEach((dataUrl, index) => {
+      const win = window.open('', `_blank`);
+      if (win) {
+        win.document.write(`
+          <html>
+            <head>
+              <title>Journey Step ${index + 1}</title>
+              <style>
+                body { margin: 0; padding: 20px; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+                img { max-width: 100%; height: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+                .info { color: #fff; text-align: center; margin-bottom: 20px; }
+              </style>
+            </head>
+            <body>
+              <div>
+                <div class="info">
+                  <h2>Step ${index + 1}: ${this.results[index]?.step || 'Unknown'}</h2>
+                  <p>${this.results[index]?.evidence || ''}</p>
+                </div>
+                <img src="${dataUrl}" alt="Screenshot ${index + 1}" />
+              </div>
+            </body>
+          </html>
+        `);
+      }
+    });
+
+    console.log(`✅ Opened ${this.screenshots.length} screenshots in new tabs`);
   }
 
   private async wait(ms: number): Promise<void> {
@@ -88,24 +209,31 @@ class ParentJourneyVerifier {
     return null;
   }
 
-  async runCompleteJourney(): Promise<JourneyReport> {
+  async runCompleteJourney(options?: Partial<ScreenshotOptions>): Promise<JourneyReport> {
     this.startTime = Date.now();
     this.results = [];
+    this.screenshots = [];
+    
+    // Apply screenshot options if provided
+    if (options) {
+      this.setScreenshotOptions(options);
+    }
     
     console.group('🎯 Parent Journey Verification - Complete Flow');
-    console.log('Starting comprehensive parent user journey test...\n');
+    console.log('Starting comprehensive parent user journey test...');
+    console.log(`Screenshot capture: ${this.captureScreenshots ? 'ENABLED' : 'DISABLED'}\n`);
 
     // STEP 1: Verify page load
     try {
       const isHome = window.location.pathname === '/' || window.location.pathname === '/home';
-      this.log(
+      await this.log(
         'Step 1: Homepage Load',
         isHome,
         isHome ? 'User successfully landed on homepage' : `User on ${window.location.pathname}`,
         isHome ? undefined : 'Not on homepage'
       );
     } catch (error) {
-      this.log('Step 1: Homepage Load', false, 'Failed to verify page', (error as Error).message);
+      await this.log('Step 1: Homepage Load', false, 'Failed to verify page', (error as Error).message);
     }
 
     await this.wait(500);
@@ -117,7 +245,7 @@ class ParentJourneyVerifier {
         'Jubee mascot',
         3000
       );
-      this.log(
+      await this.log(
         'Step 2: Jubee Mascot Visible',
         jubeeExists,
         jubeeExists 
@@ -126,7 +254,7 @@ class ParentJourneyVerifier {
         jubeeExists ? undefined : 'Mascot element missing'
       );
     } catch (error) {
-      this.log('Step 2: Jubee Mascot Visible', false, 'Failed to verify', (error as Error).message);
+      await this.log('Step 2: Jubee Mascot Visible', false, 'Failed to verify', (error as Error).message);
     }
 
     await this.wait(500);
@@ -141,7 +269,7 @@ class ParentJourneyVerifier {
       );
       
       const onboardingVisible = onboardingElement !== null;
-      this.log(
+      await this.log(
         'Step 3: Onboarding Tutorial Appears',
         onboardingVisible,
         onboardingVisible 
@@ -160,12 +288,12 @@ class ParentJourneyVerifier {
           btn.textContent?.toLowerCase().includes('next') ||
           btn.textContent?.toLowerCase().includes('continue') ||
           btn.textContent?.toLowerCase().includes('got it')
-        );
+        ) as HTMLElement | undefined;
 
         if (nextButton && nextButton.offsetParent !== null) {
           nextButton.click();
           await this.wait(800);
-          this.log(
+          await this.log(
             'Step 4: Progress Through Onboarding',
             true,
             'Parent clicked Next/Continue button'
@@ -177,12 +305,12 @@ class ParentJourneyVerifier {
           ) || Array.from(document.querySelectorAll('button')).find(btn => 
             btn.textContent?.toLowerCase().includes('skip') ||
             btn.textContent?.toLowerCase().includes('close')
-          );
+          ) as HTMLElement | undefined;
 
           if (skipButton && skipButton.offsetParent !== null) {
             skipButton.click();
             await this.wait(500);
-            this.log(
+            await this.log(
               'Step 4: Complete Onboarding',
               true,
               'Parent skipped/closed onboarding tutorial'
@@ -191,14 +319,14 @@ class ParentJourneyVerifier {
         }
       }
     } catch (error) {
-      this.log('Step 3-4: Onboarding Flow', false, 'Failed to verify', (error as Error).message);
+      await this.log('Step 3-4: Onboarding Flow', false, 'Failed to verify', (error as Error).message);
     }
 
     await this.wait(1000);
 
     // STEP 5: Navigate to Stories
     try {
-          const storiesLink = document.querySelector<HTMLElement>(
+      const storiesLink = document.querySelector<HTMLElement>(
         'a[href*="/stories"], nav a:has-text("Stories")'
       ) || Array.from(document.querySelectorAll('a, button')).find(el => 
         el.textContent?.toLowerCase().includes('stories') ||
@@ -206,7 +334,7 @@ class ParentJourneyVerifier {
       ) as HTMLElement | undefined;
 
       const storiesLinkExists = storiesLink !== undefined && storiesLink instanceof HTMLElement && storiesLink.offsetParent !== null;
-      this.log(
+      await this.log(
         'Step 5: Stories Navigation Available',
         storiesLinkExists,
         storiesLinkExists 
@@ -220,7 +348,7 @@ class ParentJourneyVerifier {
         await this.wait(1500);
         
         const onStoriesPage = window.location.pathname.includes('/stories');
-        this.log(
+        await this.log(
           'Step 6: Navigate to Stories Page',
           onStoriesPage,
           onStoriesPage 
@@ -236,7 +364,7 @@ class ParentJourneyVerifier {
           const storyCards = document.querySelectorAll('[data-testid="story-card"], .story-card');
           const storyCardsExist = storyCards.length > 0;
           
-          this.log(
+          await this.log(
             'Step 7: Story Library Loads',
             storyCardsExist,
             storyCardsExist 
@@ -249,7 +377,6 @@ class ParentJourneyVerifier {
           if (storyCardsExist) {
             const firstStory = storyCards[0];
             if (!(firstStory instanceof HTMLElement)) {
-              // Skip to report generation if element is invalid
               const report: JourneyReport = {
                 testName: 'Parent User Journey - Complete Flow',
                 startTime: this.startTime,
@@ -259,6 +386,7 @@ class ParentJourneyVerifier {
                 failedSteps: this.results.filter(r => !r.passed).length,
                 results: this.results,
                 overallPass: this.results.filter(r => r.passed).length >= this.results.length * 0.7,
+                screenshots: this.screenshots,
               };
               console.groupEnd();
               return report;
@@ -270,7 +398,7 @@ class ParentJourneyVerifier {
             await this.wait(1500);
             
             const onStoryReader = window.location.pathname.match(/\/stories\/.+/);
-            this.log(
+            await this.log(
               'Step 8: Select Story',
               !!onStoryReader,
               onStoryReader 
@@ -286,7 +414,7 @@ class ParentJourneyVerifier {
                 'Story text content'
               );
               
-              this.log(
+              await this.log(
                 'Step 9: Story Content Loads',
                 !!storyText,
                 storyText 
@@ -301,7 +429,7 @@ class ParentJourneyVerifier {
                 'Audio controls'
               );
               
-              this.log(
+              await this.log(
                 'Step 10: Audio Narration Available',
                 !!audioControls,
                 audioControls 
@@ -316,7 +444,7 @@ class ParentJourneyVerifier {
                 'Navigation controls'
               );
               
-              this.log(
+              await this.log(
                 'Step 11: Story Navigation Controls',
                 !!navControls,
                 navControls 
@@ -329,7 +457,7 @@ class ParentJourneyVerifier {
         }
       }
     } catch (error) {
-      this.log('Step 5-11: Stories Navigation', false, 'Failed to verify', (error as Error).message);
+      await this.log('Step 5-11: Stories Navigation', false, 'Failed to verify', (error as Error).message);
     }
 
     // Generate report
@@ -341,7 +469,8 @@ class ParentJourneyVerifier {
       passedSteps: this.results.filter(r => r.passed).length,
       failedSteps: this.results.filter(r => !r.passed).length,
       results: this.results,
-      overallPass: this.results.filter(r => r.passed).length >= this.results.length * 0.7, // 70% pass rate
+      overallPass: this.results.filter(r => r.passed).length >= this.results.length * 0.7,
+      screenshots: this.screenshots,
     };
 
     console.log('\n📊 Journey Verification Summary');
@@ -349,46 +478,56 @@ class ParentJourneyVerifier {
     console.log(`Total Steps: ${report.totalSteps}`);
     console.log(`✅ Passed: ${report.passedSteps}`);
     console.log(`❌ Failed: ${report.failedSteps}`);
+    console.log(`📸 Screenshots: ${this.screenshots.length}`);
     console.log(`Duration: ${report.endTime - report.startTime}ms`);
     console.log(`Overall Result: ${report.overallPass ? '✅ PASS' : '❌ FAIL'}`);
+    
+    if (this.screenshots.length > 0) {
+      console.log('\n📸 Screenshot Commands:');
+      console.log('  - View screenshots: window.parentJourneyVerifier.viewScreenshots()');
+      console.log('  - Download screenshots: window.parentJourneyVerifier.downloadScreenshots()');
+    }
+    
     console.groupEnd();
 
     return report;
   }
 
-  async runQuickJourney(): Promise<JourneyReport> {
+  async runQuickJourney(options?: Partial<ScreenshotOptions>): Promise<JourneyReport> {
     this.startTime = Date.now();
     this.results = [];
+    this.screenshots = [];
+    
+    if (options) {
+      this.setScreenshotOptions(options);
+    }
     
     console.group('⚡ Parent Journey Verification - Quick Flow');
-    console.log('Testing impatient parent who skips onboarding...\n');
+    console.log('Testing impatient parent who skips onboarding...');
+    console.log(`Screenshot capture: ${this.captureScreenshots ? 'ENABLED' : 'DISABLED'}\n`);
 
-    // Quick navigation test
     try {
-      // Step 1: Navigate directly to stories
       window.location.href = '/stories';
       await this.wait(2000);
       
       const onStoriesPage = window.location.pathname.includes('/stories');
-      this.log(
+      await this.log(
         'Quick Step 1: Direct Stories Navigation',
         onStoriesPage,
         onStoriesPage ? 'Parent bypassed onboarding, went straight to stories' : 'Navigation failed'
       );
 
       if (onStoriesPage) {
-        // Step 2: Verify stories load
         const storyCards = document.querySelectorAll('[data-testid="story-card"], .story-card');
         const storyCardsExist = storyCards.length > 0;
         
-        this.log(
+        await this.log(
           'Quick Step 2: Story Library Quick Load',
           storyCardsExist,
           storyCardsExist ? `Quickly found ${storyCards.length} stories` : 'Stories not loaded'
         );
 
         if (storyCardsExist) {
-          // Step 3: Quick story preview
           (storyCards[0] as HTMLElement).click();
           await this.wait(1500);
           
@@ -397,7 +536,7 @@ class ParentJourneyVerifier {
             'Story content'
           );
           
-          this.log(
+          await this.log(
             'Quick Step 3: Story Preview',
             !!storyText,
             storyText ? 'Story loaded for quick preview' : 'Story failed to load'
@@ -405,7 +544,7 @@ class ParentJourneyVerifier {
         }
       }
     } catch (error) {
-      this.log('Quick Journey', false, 'Failed', (error as Error).message);
+      await this.log('Quick Journey', false, 'Failed', (error as Error).message);
     }
 
     const report: JourneyReport = {
@@ -417,11 +556,20 @@ class ParentJourneyVerifier {
       failedSteps: this.results.filter(r => !r.passed).length,
       results: this.results,
       overallPass: this.results.filter(r => r.passed).length === this.results.length,
+      screenshots: this.screenshots,
     };
 
     console.log('\n📊 Quick Journey Summary');
     console.log(`Passed: ${report.passedSteps}/${report.totalSteps}`);
+    console.log(`📸 Screenshots: ${this.screenshots.length}`);
     console.log(`Result: ${report.overallPass ? '✅ PASS' : '❌ FAIL'}`);
+    
+    if (this.screenshots.length > 0) {
+      console.log('\n📸 Screenshot Commands:');
+      console.log('  - View screenshots: window.parentJourneyVerifier.viewScreenshots()');
+      console.log('  - Download screenshots: window.parentJourneyVerifier.downloadScreenshots()');
+    }
+    
     console.groupEnd();
 
     return report;
@@ -440,30 +588,48 @@ class ParentJourneyVerifier {
       report += `   Status: ${result.passed ? '✅ PASS' : '❌ FAIL'}\n`;
       report += `   Evidence: ${result.evidence}\n`;
       report += `   Timestamp: ${new Date(result.timestamp).toISOString()}\n`;
+      if (result.screenshot) {
+        report += `   📸 Screenshot: Captured (${result.screenshot.length} bytes)\n`;
+      }
       if (result.error) {
         report += `   Error: ${result.error}\n`;
       }
       report += '\n';
     });
 
+    if (this.screenshots.length > 0) {
+      report += '\n📸 SCREENSHOT SUMMARY\n';
+      report += `Total screenshots captured: ${this.screenshots.length}\n`;
+      report += 'Use window.parentJourneyVerifier.viewScreenshots() to view\n';
+      report += 'Use window.parentJourneyVerifier.downloadScreenshots() to download\n';
+    }
+
     return report;
   }
 }
 
-// Export singleton instance
 export const parentJourneyVerifier = new ParentJourneyVerifier();
 
-// Make available globally for browser console testing
 if (typeof window !== 'undefined') {
-  (window as any).verifyParentJourney = async () => {
-    const report = await parentJourneyVerifier.runCompleteJourney();
+  (window as any).parentJourneyVerifier = parentJourneyVerifier;
+  
+  (window as any).verifyParentJourney = async (captureScreenshots = true) => {
+    const report = await parentJourneyVerifier.runCompleteJourney({ captureScreenshots });
     console.log('\n' + parentJourneyVerifier.getDetailedReport());
     return report;
   };
 
-  (window as any).verifyQuickJourney = async () => {
-    const report = await parentJourneyVerifier.runQuickJourney();
+  (window as any).verifyQuickJourney = async (captureScreenshots = true) => {
+    const report = await parentJourneyVerifier.runQuickJourney({ captureScreenshots });
     console.log('\n' + parentJourneyVerifier.getDetailedReport());
     return report;
+  };
+  
+  (window as any).viewJourneyScreenshots = () => {
+    parentJourneyVerifier.viewScreenshots();
+  };
+  
+  (window as any).downloadJourneyScreenshots = () => {
+    parentJourneyVerifier.downloadScreenshots();
   };
 }

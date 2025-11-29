@@ -32,11 +32,23 @@ Comprehensive verification system that programmatically tests the complete paren
 ### Browser Console Method
 Open browser console and run:
 ```javascript
-// Complete journey test
+// Complete journey test (with screenshots)
 await verifyParentJourney()
+
+// Complete journey test (without screenshots for faster execution)
+await verifyParentJourney(false)
 
 // Quick journey test (bypass onboarding)
 await verifyQuickJourney()
+
+// View captured screenshots in new tabs
+viewJourneyScreenshots()
+
+// Download all screenshots
+downloadJourneyScreenshots()
+
+// Access verifier directly
+window.parentJourneyVerifier.runCompleteJourney({ captureScreenshots: true, screenshotQuality: 0.9 })
 ```
 
 ### Performance Monitor UI
@@ -63,6 +75,7 @@ Each test step provides:
 - ✅/❌ **Status**: Pass/Fail indicator
 - 📝 **Evidence**: Detailed description of what was verified
 - ⏰ **Timestamp**: Exact time of verification
+- 📸 **Screenshot**: Visual evidence captured at each step
 - 🚨 **Error** (if failed): Specific error message
 
 Example output:
@@ -93,17 +106,43 @@ The parent journey verifier is integrated into:
 2. **Console Commands** - Developer testing interface
 3. **Production Battery Test** - Comprehensive system validation
 
+## Screenshot Features
+
+📸 **Automatic Capture** - Screenshots taken at each verification step
+📸 **Visual Evidence** - Base64-encoded JPEG images stored with results
+📸 **View in Browser** - Open screenshots in new tabs with step context
+📸 **Batch Download** - Download all screenshots at once
+📸 **Configurable Quality** - Adjust JPEG quality (0-1, default: 0.8)
+📸 **Toggle On/Off** - Disable screenshots for faster execution
+📸 **Step Association** - Each screenshot linked to specific verification step
+
+### Screenshot Commands
+```javascript
+// View all screenshots in new tabs
+viewJourneyScreenshots()
+
+// Download all screenshots as JPEG files
+downloadJourneyScreenshots()
+
+// Configure screenshot options
+window.parentJourneyVerifier.setScreenshotOptions({
+  captureScreenshots: true,
+  screenshotQuality: 0.9  // Higher quality (larger file size)
+})
+```
+
 ## Verifiable Evidence Features
 
 ✅ **Real DOM Verification** - Tests actual rendered elements
 ✅ **Timing Evidence** - Timestamps for each step
+✅ **Visual Evidence** - Screenshots captured at each verification step
 ✅ **Error Capture** - Detailed error messages on failures
 ✅ **Navigation Tracking** - URL verification at each stage
 ✅ **Element Visibility** - Confirms elements are visible (not just present)
 ✅ **Wait Strategies** - Realistic delays matching user behavior
 ✅ **Multi-Selector Support** - Tries multiple ways to find elements
 ✅ **Console Logging** - Real-time step-by-step progress
-✅ **Detailed Reports** - Comprehensive evidence documentation
+✅ **Detailed Reports** - Comprehensive evidence documentation with screenshots
 
 ## Expected Results (Baseline)
 
@@ -145,7 +184,8 @@ The parent journey verifier is integrated into:
 
 ## Future Enhancements
 
-- [ ] Screenshot capture at each step
+- [x] Screenshot capture at each step ✅ **IMPLEMENTED**
+- [ ] Screenshot comparison for visual regression detection
 - [ ] Performance metrics (load times, render times)
 - [ ] Accessibility verification (ARIA, keyboard navigation)
 - [ ] Cross-browser compatibility checks
@@ -153,3 +193,6 @@ The parent journey verifier is integrated into:
 - [ ] Network throttling tests
 - [ ] Offline mode verification
 - [ ] Audio playback verification
+- [ ] Video recording of entire journey
+- [ ] Highlight elements in screenshots
+- [ ] Annotated screenshots with pass/fail indicators
