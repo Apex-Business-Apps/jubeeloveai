@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { RefreshCw, AlertTriangle, CheckCircle, FlaskConical } from 'lucide-react';
 import { runProductionBatteryTest } from '@/test/productionBatteryTest';
 import { useToast } from '@/hooks/use-toast';
+import { ParentJourneyCard } from '@/performance/ParentJourneyCard';
 
 export default function PerformanceMonitor() {
   const { getAllMetrics, getSlowComponents, generateReport, resetMetrics } = usePerformanceMonitor();
@@ -124,6 +125,9 @@ export default function PerformanceMonitor() {
           </Button>
         </div>
       </div>
+
+      {/* Parent Journey Verification Card */}
+      <ParentJourneyCard />
 
       <Card className="border-primary">
         <CardHeader>

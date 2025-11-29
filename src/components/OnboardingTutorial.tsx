@@ -260,6 +260,7 @@ export function OnboardingTutorial() {
       
       {/* Main onboarding overlay - Mobile optimized */}
       <div 
+        data-testid="onboarding"
         className="fixed inset-0 z-[9999] pointer-events-none md:flex md:items-center md:justify-center"
         style={{
           paddingLeft: 'env(safe-area-inset-left)',
