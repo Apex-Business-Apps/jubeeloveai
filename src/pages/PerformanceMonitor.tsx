@@ -12,11 +12,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, AlertTriangle, CheckCircle, FlaskConical } from 'lucide-react';
 import { runProductionBatteryTest } from '@/test/productionBatteryTest';
+import { parentJourneyVerifier } from '@/test/parentJourneyVerification';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PerformanceMonitor() {
   const { getAllMetrics, getSlowComponents, generateReport, resetMetrics } = usePerformanceMonitor();
   const [metrics, setMetrics] = useState(getAllMetrics());
   const [slowComponents, setSlowComponents] = useState(getSlowComponents());
+  const { toast } = useToast();
+  const [isRunningTest, setIsRunningTest] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -40,9 +44,45 @@ export default function PerformanceMonitor() {
   };
 
   const handleRunBatteryTest = async () => {
-    console.clear();
-    console.log('🔋 Starting Production Battery Test...\n');
-    await runProductionBatteryTest();
+    setIsRunningTest(true);
+    try {
+      console.clear();
+      console.log('🔋 Starting Production Battery Test...\n');
+      await runProductionBatteryTest();
+      toast({
+        title: "Battery Test Complete",
+        description: "Check console for detailed results",
+      });
+    } catch (error) {
+      toast({
+        title: "Test Failed",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRunningTest(false);
+    }
+  };
+
+  const handleRunParentJourney = async () => {
+    setIsRunningTest(true);
+    try {
+      const report = await parentJourneyVerifier.runCompleteJourney();
+      console.log('\n' + parentJourneyVerifier.getDetailedReport());
+      
+      toast({
+        title: report.overallPass ? "Journey Test Passed ✅" : "Journey Test Failed ❌",
+        description: `${report.passedSteps}/${report.totalSteps} steps passed - Check console for evidence`,
+      });
+    } catch (error) {
+      toast({
+        title: "Test Failed",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRunningTest(false);
+    }
   };
 
   if (import.meta.env.MODE !== 'development') {
@@ -109,12 +149,27 @@ export default function PerformanceMonitor() {
               <li>Data Persistence (storage mechanisms)</li>
               <li>Security Configuration (HTTPS, CSP)</li>
             </ul>
-            <div className="pt-2">
-              <Button onClick={handleRunBatteryTest} variant="default" className="w-full">
+            <div className="pt-2 space-y-2">
+              <Button 
+                onClick={handleRunBatteryTest} 
+                disabled={isRunningTest}
+                variant="default" 
+                className="w-full"
+              >
                 <FlaskConical className="mr-2 h-4 w-4" />
-                Run Full Production Battery Test
+                {isRunningTest ? "Running Tests..." : "Run Full Production Battery Test"}
               </Button>
-              <p className="text-xs text-muted-foreground mt-2 text-center">
+              
+              <Button 
+                onClick={handleRunParentJourney}
+                disabled={isRunningTest}
+                variant="outline"
+                className="w-full"
+              >
+                {isRunningTest ? "Running Journey..." : "🎯 Verify Parent User Journey"}
+              </Button>
+              
+              <p className="text-xs text-muted-foreground text-center">
                 Results will be printed to the browser console
               </p>
             </div>
