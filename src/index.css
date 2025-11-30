@@ -11,10 +11,10 @@ All colors MUST be HSL.
     --background: 45 100% 96%;
     --foreground: 0 85% 50%;
 
-    --card: 0 0% 100%;
+    --card: 45 95% 93%;
     --card-foreground: 0 85% 50%;
 
-    --popover: 0 0% 100%;
+    --popover: 45 95% 93%;
     --popover-foreground: 0 85% 50%;
 
     --primary: 0 85% 60%;
@@ -249,8 +249,8 @@ All colors MUST be HSL.
   @apply overflow-x-auto;
   z-index: 1000;
   height: 80px;
-  background: hsl(var(--card));
-  border-top: 3px solid hsl(var(--primary) / 0.3);
+  background: hsl(var(--secondary));
+  border-top: 3px solid hsl(var(--primary));
   /* Safe area support for iOS notch/home indicator */
   padding-bottom: env(safe-area-inset-bottom);
 }
