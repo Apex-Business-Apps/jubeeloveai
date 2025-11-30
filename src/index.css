@@ -279,6 +279,12 @@ All colors MUST be HSL.
     drop-shadow(0 0 4px hsl(var(--accent)));
 }
 
+.glass-effect {
+  background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
 .writing-canvas-container {
   @apply max-w-4xl mx-auto p-6;
   padding-top: 2rem;
