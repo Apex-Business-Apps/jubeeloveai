@@ -205,7 +205,7 @@ function AppShell() {
               items-center justify-between 
               gap-2 sm:gap-0 
               p-3 sm:p-4
-              bg-gradient-to-r from-accent/20 to-primary/20
+              bg-gradient-to-r from-accent to-primary
               border-b-2 border-primary/30
               backdrop-blur-sm
             "
