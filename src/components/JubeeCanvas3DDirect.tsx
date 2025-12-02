@@ -24,6 +24,7 @@ import { useJubeeRenderingGuard } from '@/hooks/useJubeeRenderingGuard';
 import { validateJubeeState } from '@/core/jubee/JubeeStateValidator';
 import { useWebGLContextRecovery } from '@/hooks/useWebGLContextRecovery';
 import { jubeeErrorRecovery } from '@/core/jubee/JubeeErrorRecovery';
+import { useJubeeLifecycleDiagnostics } from '@/hooks/useJubeeLifecycleDiagnostics';
 
 interface JubeeCanvas3DDirectProps {
   className?: string;
@@ -102,6 +103,10 @@ function JubeeCanvas3DDirectComponent({ className }: JubeeCanvas3DDirectProps) {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // CRITICAL FIX: Integrate lifecycle diagnostics to monitor actual component refs
+  // This was previously disconnected - diagnostics monitored null ref from App.tsx
+  const lifecycleDiagnostics = useJubeeLifecycleDiagnostics(containerRef);
 
   // DIAGNOSTIC: Component lifecycle tracking
   useEffect(() => {

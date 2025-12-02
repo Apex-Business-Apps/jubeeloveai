@@ -281,12 +281,44 @@
 
 ---
 
-## 9. Build Health Status
+## 9. Diagnostics & Monitoring
+
+### Lifecycle Diagnostics
+- **Location**: `src/hooks/useJubeeLifecycleDiagnostics.ts`
+- **Integration**: Directly integrated into JubeeCanvas3DDirect component
+- **Monitoring**: State changes, DOM mutations, viewport visibility, health checks every 5 seconds
+- **Access**: `window.jubeeDebug.printHistory()` in browser console
+- **Features**:
+  - Captures snapshots of state, DOM, and viewport at lifecycle boundaries
+  - Detects critical issues (missing container/canvas, off-screen positioning)
+  - Provides health check reports with actionable diagnostics
+  - Maintains rolling history of last 50 snapshots
+
+### Rendering Guard
+- **Location**: `src/core/jubee/JubeeRenderingGuard.ts`
+- **Purpose**: Validates container, canvas, and WebGL context health
+- **Recovery**: Automatic recovery attempts (max 3) with callbacks
+- **Health Monitoring**: Periodic validation every 3 seconds
+
+### WebGL Context Recovery
+- **Location**: `src/hooks/useWebGLContextRecovery.ts`
+- **Purpose**: Detects and recovers from WebGL context loss
+- **Features**: Event listeners for contextlost/contextrestored, exponential backoff retry
+
+---
+
+## 10. Build Health Status
 
 ### Current State
 ✅ **Production-Ready** - All systems stable and optimized
 
 ### Recent Fixes
+- **CRITICAL FIX (Dec 2, 2025)**: Diagnostic system disconnection resolved
+  - **Issue**: Lifecycle diagnostics monitored null ref from App.tsx instead of actual Jubee component
+  - **Root Cause**: `useJubeeLifecycleDiagnostics` called with ref never attached to DOM
+  - **Resolution**: Moved diagnostics integration directly into JubeeCanvas3DDirect component
+  - **Impact**: Diagnostics now accurately track component state and enable recovery from failures
+  - **Verification**: `window.jubeeDebug.printHistory()` now shows correct containerExists/canvasExists status
 - Footer text/icon color changed to `text-white` for maximum contrast
 - Footer gradient opacity set to 100%
 - All shadows removed from footer for clean appearance
@@ -309,7 +341,7 @@
 
 ---
 
-## 10. Testing Reference
+## 11. Testing Reference
 
 ### E2E Test Coverage
 - ✅ Parent journey verification (`e2e/parent-journey.spec.ts`)
@@ -331,7 +363,7 @@ npx playwright test       # E2E tests
 
 ---
 
-## 11. Deployment Status
+## 12. Deployment Status
 
 ### Current Environment
 - **Frontend:** Deployed via Lovable hosting
@@ -347,7 +379,14 @@ npx playwright test       # E2E tests
 
 ---
 
-## 12. Change Log
+## 13. Change Log
+
+### December 2, 2025
+- **CRITICAL FIX**: Resolved diagnostic system disconnection
+  - Moved `useJubeeLifecycleDiagnostics` from App.tsx into JubeeCanvas3DDirect
+  - Fixed root cause: diagnostics now monitor actual component refs instead of null ref
+  - Enables accurate failure detection and automatic recovery
+- Baseline documentation locked with comprehensive component specifications
 
 ### November 30, 2025
 - ✅ Footer text/icon color finalized as `text-white`

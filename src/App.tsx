@@ -25,7 +25,6 @@ import { OnboardingTutorial } from './components/OnboardingTutorial';
 import { useOnboardingStore } from './store/useOnboardingStore';
 import { useSmartAudioPreloader } from './hooks/useSmartAudioPreloader';
 import { useSystemHealthMonitor } from './hooks/useSystemHealthMonitor';
-import { useJubeeLifecycleDiagnostics } from './hooks/useJubeeLifecycleDiagnostics';
 import { AppRoutes } from './components/AppRoutes';
 import { Navigation } from './components/Navigation';
 import { JubeeCanvas3DDirect } from './components/JubeeCanvas3DDirect';
@@ -63,7 +62,6 @@ function AppShell() {
   const [showVoiceSelector, setShowVoiceSelector] = useState(false);
   const [showStickerBook, setShowStickerBook] = useState(false);
   const [showChildSelector, setShowChildSelector] = useState(false);
-  const jubeeContainerRef = useRef<HTMLDivElement>(null);
   const { currentTheme, updateTheme, score } = useGameStore();
   const { hasCompletedOnboarding, startOnboarding } = useOnboardingStore();
   const location = useLocation();
@@ -105,16 +103,6 @@ function AppShell() {
     springBottom.set(containerPosition.bottom);
     springRight.set(containerPosition.right);
   }, [containerPosition.bottom, containerPosition.right, springBottom, springRight]);
-  
-  // DIAGNOSTIC: Add comprehensive lifecycle instrumentation (for debugging)
-  const jubeeDebug = useJubeeLifecycleDiagnostics(jubeeContainerRef);
-  
-  // Expose debug utilities to window for manual inspection
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      (window as any).jubeeDebugUtils = jubeeDebug;
-    }
-  }, [jubeeDebug]);
 
   // Track viewport width safely in browser-only effect
   useEffect(() => {
