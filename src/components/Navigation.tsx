@@ -28,12 +28,15 @@ function TabButton({ path, icon, label, longPressPath }: TabButtonProps) {
   const isActive = location.pathname === path;
   const [pressing, setPressing] = useState(false);
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
+  const longPressTriggered = useRef(false);
 
   const handlePressStart = () => {
     if (!longPressPath) return;
     
+    longPressTriggered.current = false;
     setPressing(true);
     pressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true;
       setPressing(false);
       navigate(longPressPath);
     }, 3000); // 3 seconds long press
@@ -48,9 +51,11 @@ function TabButton({ path, icon, label, longPressPath }: TabButtonProps) {
   };
 
   const handleClick = () => {
-    if (!pressing) {
+    // Only navigate if long press didn't trigger navigation
+    if (!longPressTriggered.current) {
       navigate(path);
     }
+    longPressTriggered.current = false;
   };
 
   return (
