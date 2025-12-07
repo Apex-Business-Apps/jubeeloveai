@@ -20,8 +20,8 @@ interface ContainerDimensions {
   height: number;
 }
 
-// Unified safe margin for consistent boundary enforcement - increased for better visibility
-export const JUBEE_SAFE_MARGIN = 80;
+// Unified safe margin for consistent boundary enforcement - minimal for free movement
+export const JUBEE_SAFE_MARGIN = 20;
 
 /**
  * Get responsive container dimensions based on viewport size
@@ -67,15 +67,19 @@ export function getContainerDimensions(): ContainerDimensions {
 
 /**
  * Calculate maximum safe boundaries to keep Jubee fully visible
+ * Allows movement across entire viewport with minimal restrictions
  */
 export function calculateMaxBoundaries(): { maxBottom: number; maxRight: number; minBottom: number; minRight: number } {
   const viewport = getViewportBounds();
   const container = getContainerDimensions();
   
+  // Allow Jubee to move almost anywhere - just keep within visible area
+  // minBottom: small margin above navigation bar (80px nav + 20px buffer)
+  // maxBottom: allow movement all the way to the top (viewport height - container - small margin)
   return {
-    minBottom: JUBEE_SAFE_MARGIN,
+    minBottom: 100, // Above nav bar
     minRight: JUBEE_SAFE_MARGIN,
-    maxBottom: viewport.height - container.height - JUBEE_SAFE_MARGIN,
+    maxBottom: viewport.height - container.height - JUBEE_SAFE_MARGIN, // Can go to top of screen
     maxRight: viewport.width - container.width - JUBEE_SAFE_MARGIN
   };
 }

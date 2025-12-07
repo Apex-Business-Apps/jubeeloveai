@@ -34,10 +34,14 @@ const StyleGuide = lazy(() => import('../pages/StyleGuide'));
 const HomePage = lazy(() => import('../pages/Home'));
 const OAuthConsent = lazy(() => import('../pages/OAuthConsent'));
 const GamesMenu = lazy(() => import('../pages/GamesMenu'));
+const Landing = lazy(() => import('../pages/Landing'));
 
 export function AppRoutes() {
   return (
     <Routes>
+      {/* Marketing landing page */}
+      <Route path="/landing" element={<Suspense fallback={<SettingsSkeleton />}><Landing /></Suspense>} />
+      
       {/* Public routes - No auth required for toddlers */}
       <Route path="/auth" element={<Suspense fallback={<SettingsSkeleton />}><AuthPage /></Suspense>} />
       <Route path="/oauth/consent" element={<Suspense fallback={<SettingsSkeleton />}><OAuthConsent /></Suspense>} />
