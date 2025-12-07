@@ -25,9 +25,9 @@ export interface ViewportBounds {
 }
 
 const SAFE_MARGINS = {
-  top: 20,
+  top: 20, // Minimal top margin for free movement
   right: 20,
-  bottom: 100, // Account for 80px navigation bar + extra spacing
+  bottom: 100, // Account for 80px navigation bar + buffer
   left: 20,
 }
 
