@@ -97,7 +97,7 @@ async function synthesizeWithElevenLabs(
   // Balanced voice settings for child-friendly, warm delivery
   // Adjust stability and style based on mood
   let stability = 0.35;
-  let similarityBoost = 0.75;
+  const similarityBoost = 0.75;
   let style = 0.45;
   
   if (mood === 'excited') {
